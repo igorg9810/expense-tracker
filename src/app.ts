@@ -2,11 +2,15 @@ import express, { Express, Request, Response, NextFunction } from 'express';
 import { Router } from 'express';
 import config from './config/index';
 import { logger } from './helpers/Logger';
+import cors from 'cors';
+import { json } from 'body-parser';
+import { expensesController } from './expenses/expenses.controller';
 
 const app: Express = express();
 
 // Middleware
-app.use(express.json());
+app.use(cors());
+app.use(json());
 app.use(express.urlencoded({ extended: true }));
 
 // Security headers middleware
@@ -37,21 +41,16 @@ app.get('/ping', (req: Request, res: Response) => {
 // API routes
 const apiRouter = Router();
 
-// Example route with parameters
-apiRouter.get('/expenses/:id', (req: Request, res: Response) => {
-  res.json({
-    message: `Fetching expense with ID: ${req.params.id}`,
-    data: null,
-  });
-});
-
-// List expenses route
-apiRouter.get('/expenses', (req: Request, res: Response) => {
-  res.json({
-    message: 'Fetching all expenses',
-    data: [],
-  });
-});
+// Expenses routes
+apiRouter.post('/expenses', expensesController.createExpense.bind(expensesController));
+apiRouter.get('/expenses', expensesController.getAllExpenses.bind(expensesController));
+apiRouter.get('/expenses/:id', expensesController.getExpenseById.bind(expensesController));
+apiRouter.put('/expenses/:id', expensesController.updateExpense.bind(expensesController));
+apiRouter.delete('/expenses/:id', expensesController.deleteExpense.bind(expensesController));
+apiRouter.get(
+  '/expenses-by-category',
+  expensesController.getExpensesByCategory.bind(expensesController)
+);
 
 app.use('/api', apiRouter);
 
