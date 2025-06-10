@@ -43,12 +43,12 @@ const apiRouter = Router();
 
 // Expenses routes
 apiRouter.post('/expenses', expensesController.createExpense.bind(expensesController));
-apiRouter.get('/expenses', expensesController.getAllExpenses.bind(expensesController));
 apiRouter.get('/expenses/:id', expensesController.getExpenseById.bind(expensesController));
+apiRouter.get('/expenses', expensesController.getAllExpenses.bind(expensesController));
 apiRouter.put('/expenses/:id', expensesController.updateExpense.bind(expensesController));
 apiRouter.delete('/expenses/:id', expensesController.deleteExpense.bind(expensesController));
 apiRouter.get(
-  '/expenses-by-category',
+  '/expenses/categories/totals',
   expensesController.getExpensesByCategory.bind(expensesController)
 );
 

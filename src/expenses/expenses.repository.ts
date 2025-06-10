@@ -1,10 +1,20 @@
-import dbService from '../db/db.service';
+import prisma from '../db/prisma';
 import { CreateExpenseDto, Expense, UpdateExpenseDto } from './dto/types';
+import { Expense as PrismaExpense } from '@prisma/client';
 
 export class ExpensesRepository {
   private static instance: ExpensesRepository;
 
   private constructor() {}
+
+  private transformPrismaExpense(prismaExpense: PrismaExpense): Expense {
+    return {
+      ...prismaExpense,
+      date: prismaExpense.date.toISOString(),
+      createdAt: prismaExpense.createdAt.toISOString(),
+      updatedAt: prismaExpense.updatedAt.toISOString(),
+    };
+  }
 
   public static getInstance(): ExpensesRepository {
     if (!ExpensesRepository.instance) {
@@ -13,142 +23,143 @@ export class ExpensesRepository {
     return ExpensesRepository.instance;
   }
 
-  public create(expense: CreateExpenseDto): Expense {
-    const result = dbService.executeQuery<{ lastInsertRowid: number }>(
-      `
-            INSERT INTO expenses (name, amount, currency, category, date)
-            VALUES (:name, :amount, :currency, :category, COALESCE(:date, CURRENT_TIMESTAMP))
-        `,
-      {
+  public async create(expense: CreateExpenseDto): Promise<Expense> {
+    const result = await prisma.expense.create({
+      data: {
         name: expense.name,
         amount: expense.amount,
         currency: expense.currency,
         category: expense.category,
-        date: expense.date || null, // Explicitly set to null if not provided
-      }
-    );
-
-    return this.findById(result.lastInsertRowid);
+        date: expense.date ? new Date(expense.date) : new Date(),
+      },
+    });
+    return this.transformPrismaExpense(result);
   }
 
-  public findById(id: number): Expense {
-    const expense = dbService.fetch<Expense>(
-      `
-            SELECT * FROM expenses WHERE id = :id
-        `,
-      { id }
-    )[0];
+  public async findById(id: number): Promise<Expense> {
+    const expense = await prisma.expense.findUnique({
+      where: { id },
+    });
 
     if (!expense) {
       throw new Error(`Expense with id ${id} not found`);
     }
 
-    return expense;
+    return this.transformPrismaExpense(expense);
   }
 
-  public findAll(options?: {
+  public async findAll(options?: {
     category?: string;
     startDate?: string;
     endDate?: string;
     limit?: number;
     offset?: number;
-  }): Expense[] {
-    let query = 'SELECT * FROM expenses WHERE 1=1';
-    const params: Record<string, unknown> = {};
+  }): Promise<Expense[]> {
+    const where: {
+      category?: string;
+      date?: {
+        gte?: Date;
+        lte?: Date;
+      };
+    } = {};
 
     if (options?.category) {
-      query += ' AND category = :category';
-      params.category = options.category;
+      where.category = options.category;
     }
 
     if (options?.startDate) {
-      query += ' AND date >= :startDate';
-      params.startDate = options.startDate;
+      where.date = {
+        ...where.date,
+        gte: new Date(options.startDate),
+      };
     }
 
     if (options?.endDate) {
-      query += ' AND date <= :endDate';
-      params.endDate = options.endDate;
+      where.date = {
+        ...where.date,
+        lte: new Date(options.endDate),
+      };
     }
 
-    query += ' ORDER BY date DESC';
-
-    if (options?.limit) {
-      query += ' LIMIT :limit';
-      params.limit = options.limit;
-    }
-
-    if (options?.offset) {
-      query += ' OFFSET :offset';
-      params.offset = options.offset;
-    }
-
-    return dbService.fetch<Expense>(query, params);
+    const expenses = await prisma.expense.findMany({
+      where,
+      orderBy: { date: 'desc' },
+      take: options?.limit,
+      skip: options?.offset,
+    });
+    return expenses.map((expense) => this.transformPrismaExpense(expense));
   }
 
-  public update(id: number, updateDto: UpdateExpenseDto): Expense {
-    const currentExpense = this.findById(id);
-    const updatedExpense = { ...currentExpense, ...updateDto };
+  public async update(id: number, updateDto: UpdateExpenseDto): Promise<Expense> {
+    const data: {
+      name?: string;
+      amount?: number;
+      category?: string;
+      date?: Date;
+    } = {};
 
-    dbService.executeQuery(
-      `
-            UPDATE expenses
-            SET name = :name,
-                amount = :amount,
-                currency = :currency,
-                category = :category,
-                date = :date
-            WHERE id = :id
-        `,
-      {
-        id,
-        name: updatedExpense.name,
-        amount: updatedExpense.amount,
-        currency: updatedExpense.currency,
-        category: updatedExpense.category,
-        date: updatedExpense.date,
-      }
-    );
+    if (updateDto.name !== undefined) data.name = updateDto.name;
+    if (updateDto.amount !== undefined) data.amount = updateDto.amount;
+    if (updateDto.category !== undefined) data.category = updateDto.category;
+    if (updateDto.date !== undefined) data.date = new Date(updateDto.date);
 
-    return this.findById(id);
+    const result = await prisma.expense.update({
+      where: { id },
+      data,
+    });
+    return this.transformPrismaExpense(result);
   }
 
-  public delete(id: number): void {
-    const result = dbService.executeQuery<{ changes: number }>(
-      `
-            DELETE FROM expenses WHERE id = :id
-        `,
-      { id }
-    );
-
-    if (result.changes === 0) {
-      throw new Error(`Expense with id ${id} not found`);
-    }
+  public async delete(id: number): Promise<void> {
+    await prisma.expense.delete({
+      where: { id },
+    });
   }
 
-  public getTotalByCategory(
+  public async getTotalByCategory(
     startDate?: string,
     endDate?: string
-  ): Array<{ category: string; total: number }> {
-    let query = `
-            SELECT category, SUM(amount) as total
-            FROM expenses
-            WHERE 1=1
-        `;
-    const params: Record<string, unknown> = {};
+  ): Promise<Array<{ category: string; total: number }>> {
+    const where: {
+      date?: {
+        gte?: Date;
+        lte?: Date;
+      };
+    } = {};
 
     if (startDate) {
-      query += ' AND date >= :startDate';
-      params.startDate = startDate;
+      where.date = {
+        ...where.date,
+        gte: new Date(startDate),
+      };
     }
 
     if (endDate) {
-      query += ' AND date <= :endDate';
-      params.endDate = endDate;
+      where.date = {
+        ...where.date,
+        lte: new Date(endDate),
+      };
     }
 
-    query += ' GROUP BY category ORDER BY total DESC';
+    const expenses = await prisma.expense.findMany({
+      where,
+      select: {
+        category: true,
+        amount: true,
+      },
+    });
 
-    return dbService.fetch(query, params);
+    const totals = expenses.reduce(
+      (acc, expense) => {
+        const category = expense.category;
+        acc[category] = (acc[category] || 0) + expense.amount;
+        return acc;
+      },
+      {} as Record<string, number>
+    );
+
+    return Object.entries(totals)
+      .map(([category, total]) => ({ category, total }))
+      .sort((a, b) => b.total - a.total);
   }
 }

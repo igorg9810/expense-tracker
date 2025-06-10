@@ -17,59 +17,59 @@ export class ExpensesService {
     return ExpensesService.instance;
   }
 
-  public createExpense(data: CreateExpenseDto): Expense {
+  public async createExpense(data: CreateExpenseDto): Promise<Expense> {
     this.validateExpenseData(data);
     return this.repository.create(data);
   }
 
-  public getExpenseById(id: number): Expense {
+  public async getExpenseById(id: number): Promise<Expense> {
     return this.repository.findById(id);
   }
 
-  public getAllExpenses(options?: {
+  public async getAllExpenses(options?: {
     category?: string;
     startDate?: string;
     endDate?: string;
     page?: number;
     pageSize?: number;
-  }): { expenses: Expense[]; total: number } {
+  }): Promise<{ expenses: Expense[]; total: number }> {
     const limit = Math.min(
       options?.pageSize || config.pagination.defaultPageSize,
       config.pagination.maxPageSize
     );
     const offset = options?.page ? (options.page - 1) * limit : 0;
 
-    const expenses = this.repository.findAll({
-      ...options,
-      limit,
-      offset,
-    });
+    const [expenses, totalExpenses] = await Promise.all([
+      this.repository.findAll({
+        ...options,
+        limit,
+        offset,
+      }),
+      this.repository.findAll({
+        category: options?.category,
+        startDate: options?.startDate,
+        endDate: options?.endDate,
+      }),
+    ]);
 
-    // Get total count for pagination
-    const total = this.repository.findAll({
-      category: options?.category,
-      startDate: options?.startDate,
-      endDate: options?.endDate,
-    }).length;
-
-    return { expenses, total };
+    return { expenses, total: totalExpenses.length };
   }
 
-  public updateExpense(id: number, data: UpdateExpenseDto): Expense {
+  public async updateExpense(id: number, data: UpdateExpenseDto): Promise<Expense> {
     if (Object.keys(data).length > 0) {
       this.validateExpenseData(data as Partial<CreateExpenseDto>);
     }
     return this.repository.update(id, data);
   }
 
-  public deleteExpense(id: number): void {
-    this.repository.delete(id);
+  public async deleteExpense(id: number): Promise<void> {
+    await this.repository.delete(id);
   }
 
-  public getExpensesByCategory(
+  public async getExpensesByCategory(
     startDate?: string,
     endDate?: string
-  ): Array<{ category: string; total: number }> {
+  ): Promise<Array<{ category: string; total: number }>> {
     return this.repository.getTotalByCategory(startDate, endDate);
   }
 

@@ -9,8 +9,8 @@ export interface CreateExpenseDto {
 export interface Expense extends CreateExpenseDto {
   id: number;
   date: string;
-  created_at: string;
-  updated_at: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface UpdateExpenseDto extends Partial<CreateExpenseDto> {

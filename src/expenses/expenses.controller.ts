@@ -31,7 +31,7 @@ export class ExpensesController {
         return;
       }
 
-      const expense = expensesService.createExpense(expenseData);
+      const expense = await expensesService.createExpense(expenseData);
       res.status(201).json(expense);
     } catch (error) {
       console.error('Create expense error:', error);
@@ -49,7 +49,7 @@ export class ExpensesController {
         return;
       }
 
-      const expense = expensesService.getExpenseById(id);
+      const expense = await expensesService.getExpenseById(id);
       res.json(expense);
     } catch (error) {
       res.status(404).json({
@@ -62,7 +62,7 @@ export class ExpensesController {
     try {
       const { category, startDate, endDate, page, pageSize } = req.query;
 
-      const result = expensesService.getAllExpenses({
+      const result = await expensesService.getAllExpenses({
         category: category as string,
         startDate: startDate as string,
         endDate: endDate as string,
@@ -95,7 +95,7 @@ export class ExpensesController {
       }
 
       const updateData: UpdateExpenseDto = { id, ...req.body };
-      const expense = expensesService.updateExpense(id, updateData);
+      const expense = await expensesService.updateExpense(id, updateData);
       res.json(expense);
     } catch (error) {
       res
@@ -112,7 +112,7 @@ export class ExpensesController {
         return;
       }
 
-      expensesService.deleteExpense(id);
+      await expensesService.deleteExpense(id);
       res.status(204).send();
     } catch (error) {
       res
@@ -124,7 +124,10 @@ export class ExpensesController {
   public async getExpensesByCategory(req: Request, res: Response): Promise<void> {
     try {
       const { startDate, endDate } = req.query;
-      const totals = expensesService.getExpensesByCategory(startDate as string, endDate as string);
+      const totals = await expensesService.getExpensesByCategory(
+        startDate as string,
+        endDate as string
+      );
       res.json(totals);
     } catch (error) {
       res.status(400).json({
