@@ -13,6 +13,4 @@ export interface Expense extends CreateExpenseDto {
   updatedAt: string;
 }
 
-export interface UpdateExpenseDto extends Partial<CreateExpenseDto> {
-  id: number;
-}
+export type UpdateExpenseDto = Partial<CreateExpenseDto>;

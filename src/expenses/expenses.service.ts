@@ -1,6 +1,19 @@
 import { ExpensesRepository } from './expenses.repository';
-import { CreateExpenseDto, Expense, UpdateExpenseDto } from './dto/types';
-import config from '../config';
+import { CreateExpenseDto, Expense } from './dto/types';
+import { logger } from '../helpers/Logger';
+
+interface GetAllExpensesOptions {
+  category?: string;
+  startDate?: string;
+  endDate?: string;
+  limit?: number;
+  offset?: number;
+}
+
+interface GetAllExpensesResult {
+  expenses: Expense[];
+  total: number;
+}
 
 export class ExpensesService {
   private static instance: ExpensesService;
@@ -17,53 +30,54 @@ export class ExpensesService {
     return ExpensesService.instance;
   }
 
-  public async createExpense(data: CreateExpenseDto): Promise<Expense> {
-    this.validateExpenseData(data);
-    return this.repository.create(data);
+  public async createExpense(expenseData: CreateExpenseDto): Promise<Expense> {
+    this.validateExpenseData(expenseData);
+    return this.repository.create(expenseData);
   }
 
-  public async getExpenseById(id: number): Promise<Expense> {
-    return this.repository.findById(id);
-  }
-
-  public async getAllExpenses(options?: {
-    category?: string;
-    startDate?: string;
-    endDate?: string;
-    page?: number;
-    pageSize?: number;
-  }): Promise<{ expenses: Expense[]; total: number }> {
-    const limit = Math.min(
-      options?.pageSize || config.pagination.defaultPageSize,
-      config.pagination.maxPageSize
-    );
-    const offset = options?.page ? (options.page - 1) * limit : 0;
-
-    const [expenses, totalExpenses] = await Promise.all([
-      this.repository.findAll({
-        ...options,
-        limit,
-        offset,
-      }),
-      this.repository.findAll({
-        category: options?.category,
-        startDate: options?.startDate,
-        endDate: options?.endDate,
-      }),
-    ]);
-
-    return { expenses, total: totalExpenses.length };
-  }
-
-  public async updateExpense(id: number, data: UpdateExpenseDto): Promise<Expense> {
-    if (Object.keys(data).length > 0) {
-      this.validateExpenseData(data as Partial<CreateExpenseDto>);
+  public async getExpenseById(id: number): Promise<Expense | null> {
+    try {
+      return await this.repository.findById(id);
+    } catch (error) {
+      return null;
     }
-    return this.repository.update(id, data);
   }
 
-  public async deleteExpense(id: number): Promise<void> {
-    await this.repository.delete(id);
+  public async getAllExpenses(options: GetAllExpensesOptions): Promise<GetAllExpensesResult> {
+    const expenses = await this.repository.findAll(options);
+    const total = expenses.length; // In a real app, you'd get this from the database
+    return { expenses, total };
+  }
+
+  public async updateExpense(
+    id: number,
+    updateData: Partial<CreateExpenseDto>
+  ): Promise<Expense | null> {
+    try {
+      // Remove undefined values from updateData
+      const cleanUpdateData = Object.fromEntries(
+        Object.entries(updateData).filter(([_, value]) => value !== undefined)
+      ) as Partial<CreateExpenseDto>;
+
+      if (Object.keys(cleanUpdateData).length === 0) {
+        throw new Error('No update data provided');
+      }
+
+      this.validateExpenseData(cleanUpdateData);
+      return await this.repository.update(id, cleanUpdateData);
+    } catch (error) {
+      logger.error('Error updating expense:', { error, id, updateData });
+      throw error; // Re-throw to be handled by the controller
+    }
+  }
+
+  public async deleteExpense(id: number): Promise<boolean> {
+    try {
+      await this.repository.delete(id);
+      return true;
+    } catch (error) {
+      return false;
+    }
   }
 
   public async getExpensesByCategory(

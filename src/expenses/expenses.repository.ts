@@ -1,6 +1,7 @@
 import prisma from '../db/prisma';
-import { CreateExpenseDto, Expense, UpdateExpenseDto } from './dto/types';
+import { CreateExpenseDto, Expense } from './dto/types';
 import { Expense as PrismaExpense } from '@prisma/client';
+import { ExpenseEntity } from './entity/expense.entity';
 
 export class ExpensesRepository {
   private static instance: ExpensesRepository;
@@ -8,12 +9,7 @@ export class ExpensesRepository {
   private constructor() {}
 
   private transformPrismaExpense(prismaExpense: PrismaExpense): Expense {
-    return {
-      ...prismaExpense,
-      date: prismaExpense.date.toISOString(),
-      createdAt: prismaExpense.createdAt.toISOString(),
-      updatedAt: prismaExpense.updatedAt.toISOString(),
-    };
+    return ExpenseEntity.fromPrisma(prismaExpense).toJSON();
   }
 
   public static getInstance(): ExpensesRepository {
@@ -90,16 +86,27 @@ export class ExpensesRepository {
     return expenses.map((expense) => this.transformPrismaExpense(expense));
   }
 
-  public async update(id: number, updateDto: UpdateExpenseDto): Promise<Expense> {
+  public async update(id: number, updateDto: Partial<CreateExpenseDto>): Promise<Expense> {
+    // First check if the expense exists
+    const existingExpense = await prisma.expense.findUnique({
+      where: { id },
+    });
+
+    if (!existingExpense) {
+      throw new Error(`Expense with id ${id} not found`);
+    }
+
     const data: {
       name?: string;
       amount?: number;
+      currency?: string;
       category?: string;
       date?: Date;
     } = {};
 
     if (updateDto.name !== undefined) data.name = updateDto.name;
     if (updateDto.amount !== undefined) data.amount = updateDto.amount;
+    if (updateDto.currency !== undefined) data.currency = updateDto.currency;
     if (updateDto.category !== undefined) data.category = updateDto.category;
     if (updateDto.date !== undefined) data.date = new Date(updateDto.date);
 

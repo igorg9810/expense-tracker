@@ -1,10 +1,18 @@
 import express, { Express, Request, Response, NextFunction } from 'express';
 import { Router } from 'express';
 import config from './config/index';
-import { logger } from './helpers/Logger';
+import { logger, requestLogger } from './helpers/Logger';
 import cors from 'cors';
 import { json } from 'body-parser';
 import { expensesController } from './expenses/expenses.controller';
+import { validateRequest } from './helpers/middlewares/validator';
+import { errorHandler, notFoundHandler } from './helpers/middlewares/errorHandler';
+import {
+  createExpenseSchema,
+  updateExpenseSchema,
+  expenseIdSchema,
+  expenseQuerySchema,
+} from './expenses/dto/validation';
 
 const app: Express = express();
 
@@ -20,6 +28,9 @@ app.use((req: Request, res: Response, next: NextFunction) => {
   res.setHeader('X-XSS-Protection', '1; mode=block');
   next();
 });
+
+// Request logger middleware
+app.use(requestLogger);
 
 // Base routes
 app.get('/', (req: Request, res: Response) => {
@@ -41,37 +52,63 @@ app.get('/ping', (req: Request, res: Response) => {
 // API routes
 const apiRouter = Router();
 
-// Expenses routes
-apiRouter.post('/expenses', expensesController.createExpense.bind(expensesController));
-apiRouter.get('/expenses/:id', expensesController.getExpenseById.bind(expensesController));
-apiRouter.get('/expenses', expensesController.getAllExpenses.bind(expensesController));
-apiRouter.put('/expenses/:id', expensesController.updateExpense.bind(expensesController));
-apiRouter.delete('/expenses/:id', expensesController.deleteExpense.bind(expensesController));
+// Expenses routes with validation
+apiRouter.post(
+  '/expenses',
+  validateRequest({ body: createExpenseSchema }),
+  (req: Request, res: Response, next: NextFunction) => {
+    expensesController.createExpense(req, res, next);
+  }
+);
+
 apiRouter.get(
-  '/expenses/categories/totals',
-  expensesController.getExpensesByCategory.bind(expensesController)
+  '/expenses',
+  validateRequest({ query: expenseQuerySchema }),
+  (req: Request, res: Response, next: NextFunction) => {
+    expensesController.getAllExpenses(req, res, next);
+  }
+);
+
+apiRouter.get(
+  '/expenses/:id',
+  validateRequest({ params: expenseIdSchema }),
+  (req: Request, res: Response, next: NextFunction) => {
+    expensesController.getExpenseById(req, res, next);
+  }
+);
+
+apiRouter.put(
+  '/expenses/:id',
+  validateRequest({
+    params: expenseIdSchema,
+    body: updateExpenseSchema,
+  }),
+  (req: Request, res: Response, next: NextFunction) => {
+    expensesController.updateExpense(req, res, next);
+  }
+);
+
+apiRouter.delete(
+  '/expenses/:id',
+  validateRequest({ params: expenseIdSchema }),
+  (req: Request, res: Response, next: NextFunction) => {
+    expensesController.deleteExpense(req, res, next);
+  }
+);
+
+apiRouter.get(
+  '/expenses/stats/category',
+  validateRequest({ query: expenseQuerySchema }),
+  (req: Request, res: Response, next: NextFunction) => {
+    expensesController.getExpensesByCategory(req, res, next);
+  }
 );
 
 app.use('/api', apiRouter);
 
-// Error handling middleware
-app.use((req: Request, res: Response, _next: NextFunction) => {
-  res.status(404).json({
-    error: {
-      message: `Not Found - ${req.originalUrl}`,
-    },
-  });
-});
-
-app.use((err: Error, req: Request, res: Response, _next: NextFunction) => {
-  logger.error(err.stack || err.message);
-  res.status(500).json({
-    error: {
-      message: 'Internal Server Error',
-      ...(config.isDevelopment && { stack: err.stack }),
-    },
-  });
-});
+// Error handling middleware should be last
+app.use(notFoundHandler);
+app.use(errorHandler);
 
 export const start = async (): Promise<void> => {
   try {
@@ -100,3 +137,5 @@ export const start = async (): Promise<void> => {
     process.exit(1);
   }
 };
+
+export default app;

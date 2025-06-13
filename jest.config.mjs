@@ -7,9 +7,17 @@ const config = {
   transform: {
     '^.+\\.ts$': 'ts-jest',
   },
+  moduleFileExtensions: ['ts', 'js', 'json', 'node'],
+  collectCoverage: true,
   collectCoverageFrom: ['src/**/*.ts'],
   coverageDirectory: 'coverage',
-  coveragePathIgnorePatterns: ['/node_modules/', '/dist/'],
+  coverageReporters: ['text', 'lcov'],
+  coveragePathIgnorePatterns: [
+    '/node_modules/',
+    '/dist/',
+    '/coverage/',
+  ],
+  verbose: true,
 };
 
 export default config; 
