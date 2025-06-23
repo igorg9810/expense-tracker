@@ -46,8 +46,8 @@ export class ExpensesRepository {
 
   public async findAll(options?: {
     category?: string;
-    startDate?: string;
-    endDate?: string;
+    fromDate?: string;
+    toDate?: string;
     limit?: number;
     offset?: number;
   }): Promise<Expense[]> {
@@ -63,17 +63,17 @@ export class ExpensesRepository {
       where.category = options.category;
     }
 
-    if (options?.startDate) {
+    if (options?.fromDate) {
       where.date = {
         ...where.date,
-        gte: new Date(options.startDate),
+        gte: new Date(options.fromDate),
       };
     }
 
-    if (options?.endDate) {
+    if (options?.toDate) {
       where.date = {
         ...where.date,
-        lte: new Date(options.endDate),
+        lte: new Date(options.toDate),
       };
     }
 
@@ -124,8 +124,8 @@ export class ExpensesRepository {
   }
 
   public async getTotalByCategory(
-    startDate?: string,
-    endDate?: string
+    fromDate?: string,
+    toDate?: string
   ): Promise<Array<{ category: string; total: number }>> {
     const where: {
       date?: {
@@ -134,17 +134,17 @@ export class ExpensesRepository {
       };
     } = {};
 
-    if (startDate) {
+    if (fromDate) {
       where.date = {
         ...where.date,
-        gte: new Date(startDate),
+        gte: new Date(fromDate),
       };
     }
 
-    if (endDate) {
+    if (toDate) {
       where.date = {
         ...where.date,
-        lte: new Date(endDate),
+        lte: new Date(toDate),
       };
     }
 

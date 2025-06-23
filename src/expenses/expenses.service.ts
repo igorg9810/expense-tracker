@@ -4,8 +4,8 @@ import { logger } from '../helpers/Logger';
 
 interface GetAllExpensesOptions {
   category?: string;
-  startDate?: string;
-  endDate?: string;
+  fromDate?: string;
+  toDate?: string;
   limit?: number;
   offset?: number;
 }
@@ -81,10 +81,10 @@ export class ExpensesService {
   }
 
   public async getExpensesByCategory(
-    startDate?: string,
-    endDate?: string
+    fromDate?: string,
+    toDate?: string
   ): Promise<Array<{ category: string; total: number }>> {
-    return this.repository.getTotalByCategory(startDate, endDate);
+    return this.repository.getTotalByCategory(fromDate, toDate);
   }
 
   private validateExpenseData(data: Partial<CreateExpenseDto>): void {

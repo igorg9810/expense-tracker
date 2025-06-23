@@ -77,7 +77,7 @@ apiRouter.get(
   }
 );
 
-apiRouter.put(
+apiRouter.patch(
   '/expenses/:id',
   validateRequest({
     params: expenseIdSchema,
