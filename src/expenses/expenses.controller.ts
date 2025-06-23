@@ -20,6 +20,7 @@ export class ExpensesController {
     try {
       const expenseData: CreateExpenseDto = req.body;
       const expense = await expensesService.createExpense(expenseData);
+      logger.info('Expense created successfully', { expenseId: expense.id });
       res.status(201).json(expense);
     } catch (error) {
       next(error);
@@ -93,6 +94,7 @@ export class ExpensesController {
         return;
       }
 
+      logger.info(`Expense with id ${id} updated successfully`);
       res.json(expense);
     } catch (error) {
       next(error);
@@ -113,6 +115,7 @@ export class ExpensesController {
         return;
       }
 
+      logger.info(`Expense with id ${id} deleted successfully`);
       res.status(204).send();
     } catch (error) {
       next(error);
