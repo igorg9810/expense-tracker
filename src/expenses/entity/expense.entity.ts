@@ -13,6 +13,7 @@ export class ExpenseEntity implements PrismaExpense {
   date: Date;
   createdAt: Date;
   updatedAt: Date;
+  userId: number;
 
   constructor(data: PrismaExpense) {
     this.id = data.id;
@@ -23,6 +24,7 @@ export class ExpenseEntity implements PrismaExpense {
     this.date = data.date;
     this.createdAt = data.createdAt;
     this.updatedAt = data.updatedAt;
+    this.userId = data.userId;
   }
 
   /**
@@ -45,6 +47,7 @@ export class ExpenseEntity implements PrismaExpense {
       date: this.date.toISOString(),
       createdAt: this.createdAt.toISOString(),
       updatedAt: this.updatedAt.toISOString(),
+      userId: this.userId,
     };
   }
 }

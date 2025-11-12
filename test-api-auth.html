@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Expense Tracker API Test - With Authentication</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 900px; margin: 20px auto; padding: 0 20px; }
+        .section { margin-bottom: 20px; padding: 20px; border: 1px solid #ccc; border-radius: 5px; }
+        .auth-section { background-color: #e8f5e8; }
+        .protected-section { background-color: #fff5e8; }
+        button { margin: 10px 5px; padding: 8px 15px; background: #007bff; color: white; border: none; border-radius: 3px; cursor: pointer; }
+        button:hover { background: #0056b3; }
+        button:disabled { background: #ccc; cursor: not-allowed; }
+        input { margin: 5px; padding: 8px; border: 1px solid #ccc; border-radius: 3px; width: 200px; }
+        pre { background: #f5f5f5; padding: 10px; overflow-x: auto; border-radius: 3px; max-height: 300px; overflow-y: auto; }
+        .token-display { background: #e8f4fd; padding: 10px; margin: 10px 0; border-radius: 3px; word-break: break-all; }
+        .status { margin: 10px 0; padding: 10px; border-radius: 3px; }
+        .success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+    </style>
+</head>
+<body>
+    <h1>🧪 Expense Tracker API Test - With Authentication</h1>
+    
+    <div id="status" class="status" style="display: none;"></div>
+
+    <!-- Authentication Section -->
+    <div class="section auth-section">
+        <h2>🔐 Authentication</h2>
+        
+        <h3>Sign Up</h3>
+        <input type="email" id="signupEmail" placeholder="Email" value="test@example.com">
+        <input type="text" id="signupName" placeholder="Name" value="Test User">
+        <input type="password" id="signupPassword" placeholder="Password" value="password123">
+        <button onclick="signUp()">Sign Up</button>
+        <pre id="signupResult"></pre>
+
+        <h3>Sign In</h3>
+        <input type="email" id="signinEmail" placeholder="Email" value="test@example.com">
+        <input type="password" id="signinPassword" placeholder="Password" value="password123">
+        <button onclick="signIn()">Sign In</button>
+        <pre id="signinResult"></pre>
+
+        <h3>Current Token</h3>
+        <div id="tokenDisplay" class="token-display">No token - please sign in</div>
+        <button onclick="clearToken()">Clear Token</button>
+        
+        <h3>Logout</h3>
+        <button onclick="logout()">Logout (Current Device)</button>
+        <button onclick="logoutAll()">Logout All Devices</button>
+        <pre id="logoutResult"></pre>
+        
+        <h3>Forgot Password</h3>
+        <input type="email" id="forgotPasswordEmail" placeholder="Email" value="test@example.com">
+        <button onclick="forgotPassword()">Send Reset Code</button>
+        <pre id="forgotPasswordResult"></pre>
+        
+        <h3>Restore Password</h3>
+        <input type="text" id="restoreResetCode" placeholder="Reset Code (6 digits)" maxlength="6">
+        <input type="password" id="restoreNewPassword" placeholder="New Password">
+        <button onclick="restorePassword()">Reset Password</button>
+        <pre id="restorePasswordResult"></pre>
+    </div>
+
+    <!-- User Management Section -->
+    <div class="section protected-section">
+        <h2>👥 User Management (Protected)</h2>
+        
+        <button onclick="getAllUsers()">Get All Users</button>
+        <button onclick="getCurrentUser()">Get My Profile (/me)</button>
+        <button onclick="getCurrentUserById()">Get My Profile (/users/:id)</button>
+        <pre id="usersResult"></pre>
+    </div>
+
+    <!-- Expense Management Section -->
+    <div class="section protected-section">
+        <h2>💰 Expense Management (Protected)</h2>
+        
+        <h3>Create Expense</h3>
+        <input type="text" id="expenseName" placeholder="Expense Name" value="Coffee">
+        <input type="number" id="expenseAmount" placeholder="Amount" value="4.50" step="0.01">
+        <input type="text" id="expenseCurrency" placeholder="Currency" value="USD">
+        <input type="text" id="expenseCategory" placeholder="Category" value="Food">
+        <button onclick="createExpense()">Create Expense</button>
+        <pre id="createResult"></pre>
+
+        <h3>Get Expenses</h3>
+        <button onclick="getAllExpenses()">Get All My Expenses</button>
+        <button onclick="getExpensesByCategory()">Get Category Totals</button>
+        <pre id="expensesResult"></pre>
+
+        <h3>Get Expense by ID</h3>
+        <input type="number" id="expenseId" placeholder="Enter expense ID">
+        <button onclick="getExpenseById()">Get Expense</button>
+        <pre id="getByIdResult"></pre>
+    </div>
+
+    <script>
+        const API_URL = 'http://localhost:3000/api';
+        let currentToken = null;
+        let currentUser = null;
+
+        // Helper function to show status messages
+        function showStatus(message, type = 'success') {
+            const statusDiv = document.getElementById('status');
+            statusDiv.textContent = message;
+            statusDiv.className = `status ${type}`;
+            statusDiv.style.display = 'block';
+            setTimeout(() => {
+                statusDiv.style.display = 'none';
+            }, 3000);
+        }
+
+        // Helper function to update token display
+        function updateTokenDisplay() {
+            const tokenDiv = document.getElementById('tokenDisplay');
+            if (currentToken) {
+                tokenDiv.textContent = `Token: ${currentToken.substring(0, 50)}...`;
+                // Enable all protected buttons
+                document.querySelectorAll('.protected-section button').forEach(btn => {
+                    btn.disabled = false;
+                });
+            } else {
+                tokenDiv.textContent = 'No token - please sign in';
+                // Disable all protected buttons
+                document.querySelectorAll('.protected-section button').forEach(btn => {
+                    btn.disabled = true;
+                });
+            }
+        }
+
+        // Helper function to make authenticated requests
+        async function authenticatedFetch(url, options = {}) {
+            if (!currentToken) {
+                throw new Error('No authentication token. Please sign in first.');
+            }
+            
+            const headers = {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${currentToken}`,
+                ...options.headers
+            };
+
+            return fetch(url, { ...options, headers });
+        }
+
+        // Authentication functions
+        async function signUp() {
+            const email = document.getElementById('signupEmail').value;
+            const name = document.getElementById('signupName').value;
+            const password = document.getElementById('signupPassword').value;
+
+            try {
+                const response = await fetch(`${API_URL}/auth/sign-up`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, name, password })
+                });
+                
+                const data = await response.json();
+                document.getElementById('signupResult').textContent = JSON.stringify(data, null, 2);
+                
+                if (response.ok && data.success) {
+                    currentToken = data.data.accessToken;
+                    currentUser = data.data.user;
+                    updateTokenDisplay();
+                    showStatus('Sign up successful! You are now logged in.');
+                } else {
+                    showStatus(`Sign up failed: ${data.message}`, 'error');
+                }
+            } catch (error) {
+                document.getElementById('signupResult').textContent = `Error: ${error.message}`;
+                showStatus(`Error: ${error.message}`, 'error');
+            }
+        }
+
+        async function signIn() {
+            const email = document.getElementById('signinEmail').value;
+            const password = document.getElementById('signinPassword').value;
+
+            try {
+                const response = await fetch(`${API_URL}/auth/sign-in`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password })
+                });
+                
+                const data = await response.json();
+                document.getElementById('signinResult').textContent = JSON.stringify(data, null, 2);
+                
+                if (response.ok && data.success) {
+                    currentToken = data.data.accessToken;
+                    currentUser = data.data.user;
+                    console.log('Sign in successful, current user:', currentUser);
+                    updateTokenDisplay();
+                    showStatus('Sign in successful!');
+                } else {
+                    showStatus(`Sign in failed: ${data.message}`, 'error');
+                }
+            } catch (error) {
+                document.getElementById('signinResult').textContent = `Error: ${error.message}`;
+                showStatus(`Error: ${error.message}`, 'error');
+            }
+        }
+
+        function clearToken() {
+            currentToken = null;
+            currentUser = null;
+            updateTokenDisplay();
+            showStatus('Logged out successfully');
+        }
+
+        // User management functions
+        async function getAllUsers() {
+            try {
+                const response = await authenticatedFetch(`${API_URL}/users`);
+                const data = await response.json();
+                document.getElementById('usersResult').textContent = JSON.stringify(data, null, 2);
+                
+                if (!response.ok) {
+                    showStatus(`Error: ${data.message}`, 'error');
+                }
+            } catch (error) {
+                document.getElementById('usersResult').textContent = `Error: ${error.message}`;
+                showStatus(`Error: ${error.message}`, 'error');
+            }
+        }
+
+        async function getCurrentUser() {
+            try {
+                const response = await authenticatedFetch(`${API_URL}/users/me`);
+                console.log('Response status:', response.status);
+                
+                const data = await response.json();
+                console.log('Response data:', data);
+                
+                document.getElementById('usersResult').textContent = JSON.stringify(data, null, 2);
+                
+                if (!response.ok) {
+                    showStatus(`Error ${response.status}: ${data.message || 'Unknown error'}`, 'error');
+                } else {
+                    showStatus('Current user data retrieved successfully!');
+                }
+            } catch (error) {
+                console.error('Fetch error:', error);
+                document.getElementById('usersResult').textContent = `Error: ${error.message}`;
+                showStatus(`Error: ${error.message}`, 'error');
+            }
+        }
+
+        async function getCurrentUserById() {
+            if (!currentUser) {
+                showStatus('No current user info available', 'error');
+                document.getElementById('usersResult').textContent = 'Error: No current user info available';
+                return;
+            }
+            
+            // Convert ID to string since the validation expects a string parameter
+            const userIdString = currentUser.id.toString();
+            console.log('Current user:', currentUser);
+            console.log('Making request to:', `${API_URL}/users/${userIdString}`);
+            
+            try {
+                const response = await authenticatedFetch(`${API_URL}/users/${userIdString}`);
+                console.log('Response status:', response.status);
+                
+                const data = await response.json();
+                console.log('Response data:', data);
+                
+                document.getElementById('usersResult').textContent = JSON.stringify(data, null, 2);
+                
+                if (!response.ok) {
+                    showStatus(`Error ${response.status}: ${data.message || 'Unknown error'}`, 'error');
+                } else {
+                    showStatus('User data retrieved successfully via ID!');
+                }
+            } catch (error) {
+                console.error('Fetch error:', error);
+                document.getElementById('usersResult').textContent = `Error: ${error.message}`;
+                showStatus(`Error: ${error.message}`, 'error');
+            }
+        }
+
+        // Expense management functions
+        async function createExpense() {
+            const expense = {
+                name: document.getElementById('expenseName').value,
+                amount: parseFloat(document.getElementById('expenseAmount').value),
+                currency: document.getElementById('expenseCurrency').value,
+                category: document.getElementById('expenseCategory').value
+            };
+
+            try {
+                const response = await authenticatedFetch(`${API_URL}/expenses`, {
+                    method: 'POST',
+                    body: JSON.stringify(expense)
+                });
+                
+                const data = await response.json();
+                document.getElementById('createResult').textContent = JSON.stringify(data, null, 2);
+                
+                if (response.ok) {
+                    showStatus('Expense created successfully!');
+                } else {
+                    showStatus(`Error: ${data.message}`, 'error');
+                }
+            } catch (error) {
+                document.getElementById('createResult').textContent = `Error: ${error.message}`;
+                showStatus(`Error: ${error.message}`, 'error');
+            }
+        }
+
+        async function getAllExpenses() {
+            try {
+                const response = await authenticatedFetch(`${API_URL}/expenses`);
+                const data = await response.json();
+                document.getElementById('expensesResult').textContent = JSON.stringify(data, null, 2);
+                
+                if (!response.ok) {
+                    showStatus(`Error: ${data.message}`, 'error');
+                }
+            } catch (error) {
+                document.getElementById('expensesResult').textContent = `Error: ${error.message}`;
+                showStatus(`Error: ${error.message}`, 'error');
+            }
+        }
+
+        async function getExpenseById() {
+            const id = document.getElementById('expenseId').value;
+            if (!id) {
+                showStatus('Please enter an expense ID', 'error');
+                return;
+            }
+
+            try {
+                const response = await authenticatedFetch(`${API_URL}/expenses/${id}`);
+                const data = await response.json();
+                document.getElementById('getByIdResult').textContent = JSON.stringify(data, null, 2);
+                
+                if (!response.ok) {
+                    showStatus(`Error: ${data.message}`, 'error');
+                }
+            } catch (error) {
+                document.getElementById('getByIdResult').textContent = `Error: ${error.message}`;
+                showStatus(`Error: ${error.message}`, 'error');
+            }
+        }
+
+        async function getExpensesByCategory() {
+            try {
+                const response = await authenticatedFetch(`${API_URL}/expenses/stats/category`);
+                const data = await response.json();
+                document.getElementById('expensesResult').textContent = JSON.stringify(data, null, 2);
+                
+                if (!response.ok) {
+                    showStatus(`Error: ${data.message}`, 'error');
+                }
+            } catch (error) {
+                document.getElementById('expensesResult').textContent = `Error: ${error.message}`;
+                showStatus(`Error: ${error.message}`, 'error');
+            }
+        }
+
+        async function forgotPassword() {
+            const email = document.getElementById('forgotPasswordEmail').value;
+            
+            try {
+                const response = await fetch('/api/auth/forgot-password', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ email })
+                });
+                
+                const data = await response.json();
+                document.getElementById('forgotPasswordResult').textContent = JSON.stringify(data, null, 2);
+                
+                if (response.ok) {
+                    showStatus('Password reset email sent successfully!');
+                } else {
+                    showStatus(`Error: ${data.message}`, 'error');
+                }
+            } catch (error) {
+                document.getElementById('forgotPasswordResult').textContent = `Error: ${error.message}`;
+                showStatus(`Error: ${error.message}`, 'error');
+            }
+        }
+
+        async function restorePassword() {
+            const resetCode = document.getElementById('restoreResetCode').value;
+            const newPassword = document.getElementById('restoreNewPassword').value;
+            
+            try {
+                const response = await fetch('/api/auth/restore-password', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ resetCode, newPassword })
+                });
+                
+                const data = await response.json();
+                document.getElementById('restorePasswordResult').textContent = JSON.stringify(data, null, 2);
+                
+                if (response.ok) {
+                    showStatus('Password reset successfully! You can now sign in with your new password.');
+                    // Clear the form after successful reset
+                    document.getElementById('restoreResetCode').value = '';
+                    document.getElementById('restoreNewPassword').value = '';
+                } else {
+                    showStatus(`Error: ${data.message}`, 'error');
+                }
+            } catch (error) {
+                document.getElementById('restorePasswordResult').textContent = `Error: ${error.message}`;
+                showStatus(`Error: ${error.message}`, 'error');
+            }
+        }
+
+        async function logout() {
+            try {
+                const response = await fetch('/api/auth/logout', {
+                    method: 'GET',
+                    credentials: 'include' // Include cookies
+                });
+                
+                const data = await response.json();
+                document.getElementById('logoutResult').textContent = JSON.stringify(data, null, 2);
+                
+                if (response.ok) {
+                    showStatus('Logged out successfully!');
+                    clearToken(); // Clear local token display
+                } else {
+                    showStatus(`Error: ${data.message}`, 'error');
+                }
+            } catch (error) {
+                document.getElementById('logoutResult').textContent = `Error: ${error.message}`;
+                showStatus(`Error: ${error.message}`, 'error');
+            }
+        }
+
+        async function logoutAll() {
+            try {
+                const response = await fetch('/api/auth/logoutAll', {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${currentToken}`
+                    },
+                    credentials: 'include' // Include cookies
+                });
+                
+                const data = await response.json();
+                document.getElementById('logoutResult').textContent = JSON.stringify(data, null, 2);
+                
+                if (response.ok) {
+                    showStatus('Logged out from all devices successfully!');
+                    clearToken(); // Clear local token display
+                } else {
+                    showStatus(`Error: ${data.message}`, 'error');
+                }
+            } catch (error) {
+                document.getElementById('logoutResult').textContent = `Error: ${error.message}`;
+                showStatus(`Error: ${error.message}`, 'error');
+            }
+        }
+
+        // Initialize the page
+        updateTokenDisplay();
+        
+        // Auto-fill for easier testing
+        document.getElementById('loginEmail').value = 'test@example.com';
+        document.getElementById('loginPassword').value = 'password123';
+    </script>
+</body>
+</html>

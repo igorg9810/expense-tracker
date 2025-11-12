@@ -2,17 +2,20 @@ import { Request, Response } from 'express';
 import { expensesController } from '../src/expenses/expenses.controller';
 import { expensesService } from '../src/expenses/expenses.service';
 import { ValidationError } from '../src/helpers/middlewares/errorHandler';
+import { AuthRequest } from '../src/auth/auth.middleware';
 
 // Mock the expenses service
 jest.mock('../src/expenses/expenses.service');
 
 describe('ExpensesController', () => {
-  let mockRequest: Partial<Request>;
+  let mockRequest: Partial<AuthRequest>;
   let mockResponse: Partial<Response>;
   let mockNext: jest.Mock;
 
   beforeEach(() => {
-    mockRequest = {};
+    mockRequest = {
+      user: { userId: 1, email: 'test@example.com' },
+    };
     mockResponse = {
       json: jest.fn(),
       status: jest.fn().mockReturnThis(),
@@ -53,7 +56,14 @@ describe('ExpensesController', () => {
         mockNext
       );
 
-      expect(expensesService.getAllExpenses).toHaveBeenCalledWith({});
+      expect(expensesService.getAllExpenses).toHaveBeenCalledWith({
+        userId: 1,
+        limit: undefined,
+        offset: undefined,
+        category: undefined,
+        fromDate: undefined,
+        toDate: undefined,
+      });
       expect(mockResponse.json).toHaveBeenCalledWith({
         data: mockExpenses,
         pagination: {
@@ -87,7 +97,14 @@ describe('ExpensesController', () => {
         mockNext
       );
 
-      expect(expensesService.getAllExpenses).toHaveBeenCalledWith({ category: 'Food' });
+      expect(expensesService.getAllExpenses).toHaveBeenCalledWith({
+        category: 'Food',
+        userId: 1,
+        limit: undefined,
+        offset: undefined,
+        fromDate: undefined,
+        toDate: undefined,
+      });
       expect(mockResponse.json).toHaveBeenCalledWith({
         data: mockExpenses,
         pagination: {
@@ -194,7 +211,10 @@ describe('ExpensesController', () => {
         mockNext
       );
 
-      expect(expensesService.createExpense).toHaveBeenCalledWith(mockExpense);
+      expect(expensesService.createExpense).toHaveBeenCalledWith({
+        ...mockExpense,
+        userId: 1,
+      });
       expect(mockResponse.status).toHaveBeenCalledWith(201);
       expect(mockResponse.json).toHaveBeenCalledWith(createdExpense);
     });

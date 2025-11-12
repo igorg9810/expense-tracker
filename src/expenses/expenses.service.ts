@@ -3,6 +3,7 @@ import { CreateExpenseDto, Expense } from './dto/types';
 import { logger } from '../helpers/Logger';
 
 interface GetAllExpensesOptions {
+  userId?: number;
   category?: string;
   fromDate?: string;
   toDate?: string;
@@ -81,10 +82,11 @@ export class ExpensesService {
   }
 
   public async getExpensesByCategory(
+    userId?: number,
     fromDate?: string,
     toDate?: string
   ): Promise<Array<{ category: string; total: number }>> {
-    return this.repository.getTotalByCategory(fromDate, toDate);
+    return this.repository.getTotalByCategory(userId, fromDate, toDate);
   }
 
   private validateExpenseData(data: Partial<CreateExpenseDto>): void {

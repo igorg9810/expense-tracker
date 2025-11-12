@@ -3,8 +3,11 @@ import { Router } from 'express';
 import config from './config/index';
 import { logger, requestLogger } from './helpers/Logger';
 import cors from 'cors';
+import helmet from 'helmet';
+import rateLimit from 'express-rate-limit';
 import { json } from 'body-parser';
 import { expensesController } from './expenses/expenses.controller';
+import { authUserRoutes, authMiddleware } from './routes/authUser.routes';
 import { validateRequest } from './helpers/middlewares/validator';
 import { errorHandler, notFoundHandler } from './helpers/middlewares/errorHandler';
 import {
@@ -13,24 +16,96 @@ import {
   expenseIdSchema,
   expenseQuerySchema,
 } from './expenses/dto/validation';
+import { SchedulerService } from './services/scheduler.service';
+import {
+  securityHeaders,
+  validateContentType,
+  limitRequestSize,
+} from './helpers/middlewares/security';
 
 const app: Express = express();
 
-// Middleware
-app.use(cors());
-app.use(json());
-app.use(express.urlencoded({ extended: true }));
+// Additional security headers middleware
+app.use(securityHeaders);
 
-// Security headers middleware
-app.use((req: Request, res: Response, next: NextFunction) => {
-  res.setHeader('X-Content-Type-Options', 'nosniff');
-  res.setHeader('X-Frame-Options', 'DENY');
-  res.setHeader('X-XSS-Protection', '1; mode=block');
-  next();
-});
+// Security middleware - helmet with custom configuration
+app.use(
+  helmet({
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: ["'self'"],
+        styleSrc: ["'self'", "'unsafe-inline'"],
+        scriptSrc: ["'self'"],
+        imgSrc: ["'self'", 'data:', 'https:'],
+        connectSrc: ["'self'"],
+        fontSrc: ["'self'"],
+        objectSrc: ["'none'"],
+        mediaSrc: ["'self'"],
+        frameSrc: ["'none'"],
+      },
+    },
+    crossOriginEmbedderPolicy: false, // Allow for development
+    hsts: {
+      maxAge: 31536000, // 1 year
+      includeSubDomains: true,
+      preload: true,
+    },
+  })
+);
+
+// CORS with secure configuration
+app.use(
+  cors({
+    origin:
+      process.env.NODE_ENV === 'production'
+        ? process.env.ALLOWED_ORIGINS?.split(',') || false
+        : ['http://localhost:3000', 'http://127.0.0.1:3000'], // Allow local development
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+    exposedHeaders: ['X-Total-Count'],
+    maxAge: 86400, // 24 hours
+  })
+);
+
+// Content-Type validation middleware
+app.use(validateContentType);
+
+// Request size limiting middleware
+app.use(limitRequestSize('1mb'));
+
+// Body parsing middleware
+app.use(json({ limit: '1mb' }));
+app.use(express.urlencoded({ extended: true, limit: '1mb' }));
 
 // Request logger middleware
 app.use(requestLogger);
+
+const generalLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100, // Limit each IP to 100 requests per windowMs for general endpoints
+  message: {
+    error: 'Too many requests from this IP, please try again later.',
+    retryAfter: '15 minutes',
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+// Apply general rate limiting to all requests
+app.use(generalLimiter);
+
+// Static file serving for test files
+app.use(
+  express.static('.', {
+    index: false,
+    setHeaders: (res, path) => {
+      if (path.endsWith('.html')) {
+        res.setHeader('Content-Type', 'text/html');
+      }
+    },
+  })
+);
 
 // Base routes
 app.get('/', (req: Request, res: Response) => {
@@ -52,9 +127,13 @@ app.get('/ping', (req: Request, res: Response) => {
 // API routes
 const apiRouter = Router();
 
-// Expenses routes with validation
+// Auth and User routes (includes both public and protected routes)
+apiRouter.use(authUserRoutes);
+
+// Expenses routes with validation and authentication
 apiRouter.post(
   '/expenses',
+  authMiddleware.authenticate,
   validateRequest({ body: createExpenseSchema }),
   (req: Request, res: Response, next: NextFunction) => {
     expensesController.createExpense(req, res, next);
@@ -63,6 +142,7 @@ apiRouter.post(
 
 apiRouter.get(
   '/expenses',
+  authMiddleware.authenticate,
   validateRequest({ query: expenseQuerySchema }),
   (req: Request, res: Response, next: NextFunction) => {
     expensesController.getAllExpenses(req, res, next);
@@ -71,6 +151,7 @@ apiRouter.get(
 
 apiRouter.get(
   '/expenses/:id',
+  authMiddleware.authenticate,
   validateRequest({ params: expenseIdSchema }),
   (req: Request, res: Response, next: NextFunction) => {
     expensesController.getExpenseById(req, res, next);
@@ -79,6 +160,7 @@ apiRouter.get(
 
 apiRouter.patch(
   '/expenses/:id',
+  authMiddleware.authenticate,
   validateRequest({
     params: expenseIdSchema,
     body: updateExpenseSchema,
@@ -90,6 +172,7 @@ apiRouter.patch(
 
 apiRouter.delete(
   '/expenses/:id',
+  authMiddleware.authenticate,
   validateRequest({ params: expenseIdSchema }),
   (req: Request, res: Response, next: NextFunction) => {
     expensesController.deleteExpense(req, res, next);
@@ -98,6 +181,7 @@ apiRouter.delete(
 
 apiRouter.get(
   '/expenses/stats/category',
+  authMiddleware.authenticate,
   validateRequest({ query: expenseQuerySchema }),
   (req: Request, res: Response, next: NextFunction) => {
     expensesController.getExpensesByCategory(req, res, next);
@@ -115,6 +199,9 @@ export const start = async (): Promise<void> => {
     const server = app.listen(config.port, () => {
       logger.info(`Server listening on port ${config.port} in ${config.nodeEnv} mode`);
     });
+
+    // Initialize scheduled jobs
+    SchedulerService.initialize();
 
     // Handle graceful shutdown
     process.on('SIGTERM', () => {

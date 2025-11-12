@@ -4,6 +4,7 @@ export interface CreateExpenseDto {
   currency: string;
   category: string;
   date?: string; // Optional, will default to current timestamp if not provided
+  userId: number;
 }
 
 export interface Expense extends CreateExpenseDto {
@@ -11,6 +12,7 @@ export interface Expense extends CreateExpenseDto {
   date: string;
   createdAt: string;
   updatedAt: string;
+  userId: number;
 }
 
 export type UpdateExpenseDto = Partial<CreateExpenseDto>;

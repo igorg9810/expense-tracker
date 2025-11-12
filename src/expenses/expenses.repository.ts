@@ -27,6 +27,7 @@ export class ExpensesRepository {
         currency: expense.currency,
         category: expense.category,
         date: expense.date ? new Date(expense.date) : new Date(),
+        userId: expense.userId,
       },
     });
     return this.transformPrismaExpense(result);
@@ -45,6 +46,7 @@ export class ExpensesRepository {
   }
 
   public async findAll(options?: {
+    userId?: number;
     category?: string;
     fromDate?: string;
     toDate?: string;
@@ -52,12 +54,17 @@ export class ExpensesRepository {
     offset?: number;
   }): Promise<Expense[]> {
     const where: {
+      userId?: number;
       category?: string;
       date?: {
         gte?: Date;
         lte?: Date;
       };
     } = {};
+
+    if (options?.userId) {
+      where.userId = options.userId;
+    }
 
     if (options?.category) {
       where.category = options.category;
@@ -124,15 +131,21 @@ export class ExpensesRepository {
   }
 
   public async getTotalByCategory(
+    userId?: number,
     fromDate?: string,
     toDate?: string
   ): Promise<Array<{ category: string; total: number }>> {
     const where: {
+      userId?: number;
       date?: {
         gte?: Date;
         lte?: Date;
       };
     } = {};
+
+    if (userId) {
+      where.userId = userId;
+    }
 
     if (fromDate) {
       where.date = {

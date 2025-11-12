@@ -1,8 +1,9 @@
-import { Request, Response, NextFunction } from 'express';
+import { Response, NextFunction } from 'express';
 import { expensesService } from './expenses.service';
 import { CreateExpenseDto, UpdateExpenseDto } from './dto/types';
 import { BadRequestError, NotFoundError } from '../helpers/middlewares/errorHandler';
 import { logger } from '../helpers/Logger';
+import { AuthRequest } from '../auth/auth.middleware';
 
 export class ExpensesController {
   private static instance: ExpensesController;
@@ -16,9 +17,12 @@ export class ExpensesController {
     return ExpensesController.instance;
   }
 
-  public async createExpense(req: Request, res: Response, next: NextFunction): Promise<void> {
+  public async createExpense(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
     try {
-      const expenseData: CreateExpenseDto = req.body;
+      const expenseData: CreateExpenseDto = {
+        ...req.body,
+        userId: req.user!.userId, // Get userId from authenticated user
+      };
       const expense = await expensesService.createExpense(expenseData);
       logger.info('Expense created successfully', { expenseId: expense.id });
       res.status(201).json(expense);
@@ -27,7 +31,7 @@ export class ExpensesController {
     }
   }
 
-  public async getExpenseById(req: Request, res: Response, next: NextFunction): Promise<void> {
+  public async getExpenseById(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
     try {
       const id = parseInt(req.params.id);
       if (isNaN(id)) {
@@ -47,11 +51,12 @@ export class ExpensesController {
     }
   }
 
-  public async getAllExpenses(req: Request, res: Response, next: NextFunction): Promise<void> {
+  public async getAllExpenses(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
     try {
       const { category, fromDate, toDate, limit, offset } = req.query;
 
       const result = await expensesService.getAllExpenses({
+        userId: req.user!.userId, // Filter by authenticated user
         category: category as string,
         fromDate: fromDate as string,
         toDate: toDate as string,
@@ -72,7 +77,7 @@ export class ExpensesController {
     }
   }
 
-  public async updateExpense(req: Request, res: Response, next: NextFunction): Promise<void> {
+  public async updateExpense(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
     try {
       const id = parseInt(req.params.id);
       if (isNaN(id)) {
@@ -101,7 +106,7 @@ export class ExpensesController {
     }
   }
 
-  public async deleteExpense(req: Request, res: Response, next: NextFunction): Promise<void> {
+  public async deleteExpense(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
     try {
       const id = parseInt(req.params.id);
       if (isNaN(id)) {
@@ -123,13 +128,14 @@ export class ExpensesController {
   }
 
   public async getExpensesByCategory(
-    req: Request,
+    req: AuthRequest,
     res: Response,
     next: NextFunction
   ): Promise<void> {
     try {
       const { fromDate, toDate } = req.query;
       const totals = await expensesService.getExpensesByCategory(
+        req.user!.userId, // Filter by authenticated user
         fromDate as string,
         toDate as string
       );
