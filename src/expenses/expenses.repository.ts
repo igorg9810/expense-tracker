@@ -28,6 +28,7 @@ export class ExpensesRepository {
         category: expense.category,
         date: expense.date ? new Date(expense.date) : new Date(),
         userId: expense.userId,
+        displayOrder: expense.displayOrder ?? 0,
       },
     });
     return this.transformPrismaExpense(result);
@@ -86,7 +87,7 @@ export class ExpensesRepository {
 
     const expenses = await prisma.expense.findMany({
       where,
-      orderBy: { date: 'desc' },
+      orderBy: [{ displayOrder: 'asc' }, { date: 'desc' }],
       take: options?.limit,
       skip: options?.offset,
     });
@@ -109,6 +110,7 @@ export class ExpensesRepository {
       currency?: string;
       category?: string;
       date?: Date;
+      displayOrder?: number;
     } = {};
 
     if (updateDto.name !== undefined) data.name = updateDto.name;
@@ -116,12 +118,25 @@ export class ExpensesRepository {
     if (updateDto.currency !== undefined) data.currency = updateDto.currency;
     if (updateDto.category !== undefined) data.category = updateDto.category;
     if (updateDto.date !== undefined) data.date = new Date(updateDto.date);
+    const upd = updateDto as unknown as { displayOrder?: number };
+    if (upd.displayOrder !== undefined) data.displayOrder = upd.displayOrder;
 
     const result = await prisma.expense.update({
       where: { id },
       data,
     });
     return this.transformPrismaExpense(result);
+  }
+
+  public async updateOrder(userId: number, orderedIds: number[]): Promise<void> {
+    // Update each expense's displayOrder according to its position in orderedIds
+    const updates = orderedIds.map((id, index) =>
+      prisma.expense.updateMany({
+        where: { id, userId },
+        data: { displayOrder: index },
+      })
+    );
+    await Promise.all(updates);
   }
 
   public async delete(id: number): Promise<void> {

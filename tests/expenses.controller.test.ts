@@ -313,4 +313,69 @@ describe('ExpensesController', () => {
       );
     });
   });
+
+  describe('reorderExpenses', () => {
+    it('should successfully reorder expenses', async () => {
+      const orderData = { order: [3, 1, 2] };
+      mockRequest.body = orderData;
+
+      (expensesService.updateExpensesOrder as jest.Mock).mockResolvedValue(undefined);
+
+      await expensesController.reorderExpenses(
+        mockRequest as AuthRequest,
+        mockResponse as Response,
+        mockNext
+      );
+
+      expect(expensesService.updateExpensesOrder).toHaveBeenCalledWith(1, [3, 1, 2]);
+      expect(mockResponse.json).toHaveBeenCalledWith({ success: true });
+    });
+
+    it('should handle invalid order array with non-integers', async () => {
+      mockRequest.body = { order: [1, 'invalid', 3] };
+
+      await expensesController.reorderExpenses(
+        mockRequest as AuthRequest,
+        mockResponse as Response,
+        mockNext
+      );
+
+      expect(mockNext).toHaveBeenCalledWith(
+        expect.objectContaining({
+          message: 'Invalid order array: all values must be positive integers',
+        })
+      );
+    });
+
+    it('should handle invalid order array with negative numbers', async () => {
+      mockRequest.body = { order: [1, -5, 3] };
+
+      await expensesController.reorderExpenses(
+        mockRequest as AuthRequest,
+        mockResponse as Response,
+        mockNext
+      );
+
+      expect(mockNext).toHaveBeenCalledWith(
+        expect.objectContaining({
+          message: 'Invalid order array: all values must be positive integers',
+        })
+      );
+    });
+
+    it('should handle service errors', async () => {
+      const error = new Error('Database error');
+      mockRequest.body = { order: [1, 2, 3] };
+
+      (expensesService.updateExpensesOrder as jest.Mock).mockRejectedValue(error);
+
+      await expensesController.reorderExpenses(
+        mockRequest as AuthRequest,
+        mockResponse as Response,
+        mockNext
+      );
+
+      expect(mockNext).toHaveBeenCalledWith(error);
+    });
+  });
 });

@@ -467,8 +467,10 @@
         updateTokenDisplay();
         
         // Auto-fill for easier testing
-        document.getElementById('loginEmail').value = 'test@example.com';
-        document.getElementById('loginPassword').value = 'password123';
+        const loginEmailEl = document.getElementById('signinEmail');
+        const loginPasswordEl = document.getElementById('signinPassword');
+        if (loginEmailEl) loginEmailEl.value = 'test@example.com';
+        if (loginPasswordEl) loginPasswordEl.value = 'password123';
     </script>
 </body>
 </html>

@@ -8,13 +8,19 @@ import rateLimit from 'express-rate-limit';
 import { json } from 'body-parser';
 import { expensesController } from './expenses/expenses.controller';
 import { authUserRoutes, authMiddleware } from './routes/authUser.routes';
+import {
+  invoiceAnalysisController,
+  uploadMiddleware,
+} from './invoices/invoice-analysis.controller';
 import { validateRequest } from './helpers/middlewares/validator';
+import { AuthRequest } from './auth/auth.middleware';
 import { errorHandler, notFoundHandler } from './helpers/middlewares/errorHandler';
 import {
   createExpenseSchema,
   updateExpenseSchema,
   expenseIdSchema,
   expenseQuerySchema,
+  reorderExpensesSchema,
 } from './expenses/dto/validation';
 import { SchedulerService } from './services/scheduler.service';
 import {
@@ -59,7 +65,7 @@ app.use(
     origin:
       process.env.NODE_ENV === 'production'
         ? process.env.ALLOWED_ORIGINS?.split(',') || false
-        : ['http://localhost:3000', 'http://127.0.0.1:3000'], // Allow local development
+        : ['http://localhost:3000', 'http://127.0.0.1:3000', 'http://localhost:5173', 'null'], // Allow local development and file:// origin
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
@@ -185,6 +191,26 @@ apiRouter.get(
   validateRequest({ query: expenseQuerySchema }),
   (req: Request, res: Response, next: NextFunction) => {
     expensesController.getExpensesByCategory(req, res, next);
+  }
+);
+
+apiRouter.patch(
+  '/expenses/reorder',
+  authMiddleware.authenticate,
+  validateRequest({ body: reorderExpensesSchema }),
+  (req: Request, res: Response, next: NextFunction) => {
+    // Cast validated request to AuthRequest for controller
+    expensesController.reorderExpenses(req as AuthRequest, res, next);
+  }
+);
+
+// Invoice analysis routes
+apiRouter.post(
+  '/invoices/analyze',
+  authMiddleware.authenticate,
+  uploadMiddleware.single('invoice'),
+  (req: Request, res: Response, next: NextFunction) => {
+    invoiceAnalysisController.analyzeInvoice(req, res, next);
   }
 );
 

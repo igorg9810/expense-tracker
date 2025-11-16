@@ -17,6 +17,31 @@ export class ExpensesController {
     return ExpensesController.instance;
   }
 
+  public async reorderExpenses(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const payload = req.body;
+      if (!payload || !Array.isArray(payload.order)) {
+        next(new BadRequestError('Order payload must be an array of expense IDs'));
+        return;
+      }
+
+      // Validate that all values are positive integers
+      for (const val of payload.order) {
+        const num = Number(val);
+        if (!Number.isInteger(num) || num <= 0) {
+          next(new BadRequestError('Invalid order array: all values must be positive integers'));
+          return;
+        }
+      }
+
+      const orderedIds = payload.order.map((v: unknown) => Number(v));
+      await expensesService.updateExpensesOrder(req.user!.userId, orderedIds);
+      res.status(200).json({ success: true });
+    } catch (error) {
+      next(error);
+    }
+  }
+
   public async createExpense(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
     try {
       const expenseData: CreateExpenseDto = {

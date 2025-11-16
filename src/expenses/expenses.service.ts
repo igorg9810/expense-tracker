@@ -50,6 +50,13 @@ export class ExpensesService {
     return { expenses, total };
   }
 
+  public async updateExpensesOrder(userId: number, orderedIds: number[]): Promise<void> {
+    if (!Array.isArray(orderedIds)) {
+      throw new Error('Invalid order payload');
+    }
+    await this.repository.updateOrder(userId, orderedIds);
+  }
+
   public async updateExpense(
     id: number,
     updateData: Partial<CreateExpenseDto>

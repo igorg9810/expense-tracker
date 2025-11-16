@@ -70,14 +70,30 @@ export const sanitizeInput = (req: Request, res: Response, next: NextFunction): 
     return obj;
   };
 
+  // Sanitize body (this is mutable)
   if (req.body) {
     req.body = sanitizeObject(req.body);
   }
-  if (req.query) {
-    req.query = sanitizeObject(req.query) as typeof req.query;
+
+  // For query and params, we'll sanitize them in-place since they might be read-only
+  if (req.query && typeof req.query === 'object') {
+    try {
+      const sanitizedQuery = sanitizeObject(req.query) as typeof req.query;
+      Object.assign(req.query, sanitizedQuery);
+    } catch (error) {
+      // If assignment fails, just log and continue - validation will catch malicious input
+      console.warn('Could not sanitize query parameters:', error);
+    }
   }
-  if (req.params) {
-    req.params = sanitizeObject(req.params) as typeof req.params;
+
+  if (req.params && typeof req.params === 'object') {
+    try {
+      const sanitizedParams = sanitizeObject(req.params) as typeof req.params;
+      Object.assign(req.params, sanitizedParams);
+    } catch (error) {
+      // If assignment fails, just log and continue - validation will catch malicious input
+      console.warn('Could not sanitize route parameters:', error);
+    }
   }
 
   next();
@@ -87,10 +103,24 @@ export const sanitizeInput = (req: Request, res: Response, next: NextFunction): 
 export const validateContentType = (req: Request, res: Response, next: NextFunction): void => {
   if (['POST', 'PUT', 'PATCH'].includes(req.method)) {
     const contentType = req.get('Content-Type');
-    if (!contentType || !contentType.includes('application/json')) {
+    if (!contentType) {
       res.status(415).json({
         success: false,
-        error: 'Unsupported Media Type. Content-Type must be application/json',
+        error: 'Unsupported Media Type. Content-Type must be specified',
+      });
+      return;
+    }
+
+    // Allow application/json and multipart/form-data (for file uploads)
+    const isJson = contentType.includes('application/json');
+    const isMultipart = contentType.includes('multipart/form-data');
+    const isUrlEncoded = contentType.includes('application/x-www-form-urlencoded');
+
+    if (!isJson && !isMultipart && !isUrlEncoded) {
+      res.status(415).json({
+        success: false,
+        error:
+          'Unsupported Media Type. Content-Type must be application/json, multipart/form-data, or application/x-www-form-urlencoded',
       });
       return;
     }

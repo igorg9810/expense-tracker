@@ -41,3 +41,7 @@ export const expenseQuerySchema = z.object({
   limit: z.number().int().positive().optional(),
   offset: z.number().int().nonnegative().optional(),
 });
+
+export const reorderExpensesSchema = z.object({
+  order: z.array(z.number().int().positive()),
+});
