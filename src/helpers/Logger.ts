@@ -60,8 +60,12 @@ const fileFormat = printf(({ level, message, timestamp, stack, ...metadata }) =>
   return JSON.stringify(logEntry);
 });
 
-// Determine log level based on environment
+// Determine log level based on environment and config
 const level = (): string => {
+  // Use configured log level if provided, otherwise use environment-based default
+  if (config.logLevel) {
+    return config.logLevel;
+  }
   const env = config.nodeEnv || 'development';
   return env === 'development' ? 'debug' : 'info';
 };
@@ -75,38 +79,43 @@ const logger = winston.createLogger({
     errors({ stack: true }),
     config.isProduction ? json() : consoleFormat
   ),
-  transports: [
-    // Console transport for all environments
-    new winston.transports.Console({
-      format: combine(
-        colorize({ all: true }),
-        timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),
-        consoleFormat
-      ),
-    }),
-    // File transport for production
-    ...(config.isProduction
-      ? [
-          // Error logs
-          new winston.transports.File({
-            filename: path.join('logs', 'error.log'),
-            level: 'error',
-            format: combine(timestamp(), fileFormat),
-            maxsize: 5242880, // 5MB
-            maxFiles: 5,
-            tailable: true,
-          }),
-          // Combined logs
-          new winston.transports.File({
-            filename: path.join('logs', 'combined.log'),
-            format: combine(timestamp(), fileFormat),
-            maxsize: 5242880, // 5MB
-            maxFiles: 5,
-            tailable: true,
-          }),
-        ]
-      : []),
-  ],
+  // Only add transports if logging is enabled
+  transports: config.logEnabled
+    ? [
+        // Console transport for all environments
+        new winston.transports.Console({
+          format: combine(
+            colorize({ all: true }),
+            timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),
+            consoleFormat
+          ),
+        }),
+        // File transport for production
+        ...(config.isProduction
+          ? [
+              // Error logs
+              new winston.transports.File({
+                filename: path.join('logs', 'error.log'),
+                level: 'error',
+                format: combine(timestamp(), fileFormat),
+                maxsize: 5242880, // 5MB
+                maxFiles: 5,
+                tailable: true,
+              }),
+              // Combined logs
+              new winston.transports.File({
+                filename: path.join('logs', 'combined.log'),
+                format: combine(timestamp(), fileFormat),
+                maxsize: 5242880, // 5MB
+                maxFiles: 5,
+                tailable: true,
+              }),
+            ]
+          : []),
+      ]
+    : [],
+  // Silence logger when disabled
+  silent: !config.logEnabled,
   // Handle uncaught exceptions and rejections
   exceptionHandlers: [
     new winston.transports.File({

@@ -11,6 +11,7 @@ interface Config {
   isProduction: boolean;
   dbPath: string;
   logLevel: string;
+  logEnabled: boolean;
   cors: {
     origin: string[];
   };
@@ -31,6 +32,7 @@ const config: Config = {
   isProduction: process.env.NODE_ENV === 'production',
   dbPath: process.env.DB_PATH || path.join(process.cwd(), 'data', 'expense-tracker.db'),
   logLevel: process.env.LOG_LEVEL || 'info',
+  logEnabled: process.env.LOG_ENABLED !== 'false',
   cors: {
     origin: (process.env.CORS_ORIGIN || '*').split(',').map((origin) => origin.trim()),
   },

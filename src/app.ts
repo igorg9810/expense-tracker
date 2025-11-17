@@ -6,6 +6,7 @@ import cors from 'cors';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
 import { json } from 'body-parser';
+import compression from 'compression';
 import { expensesController } from './expenses/expenses.controller';
 import { authUserRoutes, authMiddleware } from './routes/authUser.routes';
 import {
@@ -30,6 +31,19 @@ import {
 } from './helpers/middlewares/security';
 
 const app: Express = express();
+
+// Response compression middleware (should be early in the chain)
+app.use(
+  compression({
+    filter: (req, res) => {
+      if (req.headers['x-no-compression']) {
+        return false;
+      }
+      return compression.filter(req, res);
+    },
+    level: 6, // Compression level (0-9, 6 is default balance)
+  })
+);
 
 // Additional security headers middleware
 app.use(securityHeaders);
