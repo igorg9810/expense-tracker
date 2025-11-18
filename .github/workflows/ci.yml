@@ -130,8 +130,8 @@ jobs:
             echo "Build directory not found!"
             exit 1
           fi
-          if [ ! -f "build/index.js" ]; then
-            echo "Main entry file not found in build!"
+          if [ ! -f "build/src/index.js" ]; then
+            echo "Main entry file not found in build/src/!"
             exit 1
           fi
           echo "Build artifacts verified successfully"
