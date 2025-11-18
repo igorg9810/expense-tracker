@@ -186,16 +186,20 @@ The workflow is triggered on:
 2. Add branch protection rule for `main`:
    - ☑ Require a pull request before merging
    - ☑ Require status checks to pass before merging
-   - Select required status checks:
-     - `Code Quality & Formatting`
-     - `TypeScript Type Checking`
-     - `Run Tests`
-     - `Build Application`
-     - `Build Docker Image`
-     - `Security Audit`
-     - `CI Pipeline Success`
    - ☑ Require branches to be up to date before merging
+3. After the first workflow run, you'll see available status checks. Select these required checks:
+   - ✅ `Code Quality & Formatting`
+   - ✅ `TypeScript Type Checking`
+   - ✅ `Run Tests`
+   - ✅ `Build Application`
+   - ✅ `Build Docker Image`
+   - ✅ `Security Audit`
+   - ✅ `CI Pipeline Success`
+4. Additional protection options:
    - ☑ Do not allow bypassing the above settings
+   - ☑ Require approval from code owners (if you have CODEOWNERS file)
+
+**Note:** Status checks only appear in the dropdown after the workflow has run at least once. Push the workflow file to `main` first, then configure branch protection.
 
 ### 2. GitHub Secrets Configuration
 
