@@ -2,7 +2,7 @@
 
 > A RESTful API for tracking personal expenses with OCR invoice scanning, user authentication, and comprehensive expense management.
 
-## 📋 Table of Contents
+## Table of Contents
 
 - [Features](#features)
 - [Tech Stack](#tech-stack)
@@ -17,7 +17,7 @@
 - [Project Structure](#project-structure)
 - [Contributing](#contributing)
 
-## ✨ Features
+## Features
 
 - **User Authentication**
 
@@ -58,7 +58,7 @@
   - Automatic cleanup of expired tokens
   - Email notifications
 
-## 🛠 Tech Stack
+## Development
 
 - **Runtime**: Node.js 20+
 - **Framework**: Express.js 5
@@ -74,7 +74,7 @@
 - **Containerization**: Docker with multi-stage builds
 - **CI/CD**: GitHub Actions
 
-## 📦 Prerequisites
+## Prerequisites
 
 Before you begin, ensure you have the following installed:
 
@@ -86,7 +86,7 @@ Before you begin, ensure you have the following installed:
 
 - **Docker** 20.10+ and **Docker Compose** 2.0+ ([Download](https://www.docker.com/))
 
-## 🚀 Getting Started
+## Getting Started
 
 ### 1. Clone the Repository
 
@@ -568,59 +568,59 @@ npm run migrate
 NODE_ENV=production npm start
 ```
 
-## \ud83d\udcc2 Project Structure
+## Project Structure
 
 ```
 expensetracker-api/
-\u251c\u2500\u2500 .github/
-\u2502   \u2514\u2500\u2500 workflows/
-\u2502       \u2514\u2500\u2500 ci.yml              # CI/CD pipeline
-\u251c\u2500\u2500 prisma/
-\u2502   \u251c\u2500\u2500 migrations/             # Database migrations
-\u2502   \u2514\u2500\u2500 schema.prisma           # Database schema
-\u251c\u2500\u2500 src/
-\u2502   \u251c\u2500\u2500 auth/                   # Authentication module
-\u2502   \u2502   \u251c\u2500\u2500 auth.controller.ts
-\u2502   \u2502   \u251c\u2500\u2500 auth.middleware.ts
-\u2502   \u2502   \u251c\u2500\u2500 auth.service.ts
-\u2502   \u2502   \u2514\u2500\u2500 dto/
-\u2502   \u251c\u2500\u2500 config/                 # Configuration
-\u2502   \u2502   \u2514\u2500\u2500 index.ts
-\u2502   \u251c\u2500\u2500 db/                     # Database client
-\u2502   \u2502   \u2514\u2500\u2500 index.ts
-\u2502   \u251c\u2500\u2500 expenses/               # Expenses module
-\u2502   \u2502   \u251c\u2500\u2500 expenses.controller.ts
-\u2502   \u2502   \u251c\u2500\u2500 expenses.service.ts
-\u2502   \u2502   \u2514\u2500\u2500 dto/
-\u2502   \u251c\u2500\u2500 helpers/                # Utilities
-\u2502   \u2502   \u251c\u2500\u2500 Logger.ts
-\u2502   \u2502   \u2514\u2500\u2500 middlewares/
-\u2502   \u251c\u2500\u2500 invoices/               # Invoice OCR module
-\u2502   \u2502   \u251c\u2500\u2500 invoice-analysis.controller.ts
-\u2502   \u2502   \u2514\u2500\u2500 invoice-analysis.service.ts
-\u2502   \u251c\u2500\u2500 routes/                 # Route definitions
-\u2502   \u251c\u2500\u2500 services/               # Background services
-\u2502   \u2502   \u251c\u2500\u2500 cache.service.ts
-\u2502   \u2502   \u251c\u2500\u2500 email.service.ts
-\u2502   \u2502   \u2514\u2500\u2500 scheduler.service.ts
-\u2502   \u251c\u2500\u2500 users/                  # Users module
-\u2502   \u2502   \u251c\u2500\u2500 users.controller.ts
-\u2502   \u2502   \u251c\u2500\u2500 users.service.ts
-\u2502   \u2502   \u2514\u2500\u2500 dto/
-\u2502   \u251c\u2500\u2500 app.ts                  # Express app setup
-\u2502   \u2514\u2500\u2500 index.ts                # Entry point
-\u251c\u2500\u2500 tests/                      # Test files
-\u251c\u2500\u2500 .dockerignore
-\u251c\u2500\u2500 .env.example
-\u251c\u2500\u2500 .gitignore
-\u251c\u2500\u2500 .prettierrc
-\u251c\u2500\u2500 docker-compose.yml
-\u251c\u2500\u2500 Dockerfile
-\u251c\u2500\u2500 eslint.config.mjs
-\u251c\u2500\u2500 jest.config.mjs
-\u251c\u2500\u2500 package.json
-\u251c\u2500\u2500 README.md
-\u2514\u2500\u2500 tsconfig.json
+├── .github/
+│   └── workflows/
+│       └── ci.yml              # CI/CD pipeline
+├── prisma/
+│   ├── migrations/             # Database migrations
+│   └── schema.prisma           # Database schema
+├── src/
+│   ├── auth/                   # Authentication module
+│   │   ├── auth.controller.ts
+│   │   ├── auth.middleware.ts
+│   │   ├── auth.service.ts
+│   │   └── dto/
+│   ├── config/                 # Configuration
+│   │   └── index.ts
+│   ├── db/                     # Database client
+│   │   └── index.ts
+│   ├── expenses/               # Expenses module
+│   │   ├── expenses.controller.ts
+│   │   ├── expenses.service.ts
+│   │   └── dto/
+│   ├── helpers/                # Utilities
+│   │   ├── Logger.ts
+│   │   └── middlewares/
+│   ├── invoices/               # Invoice OCR module
+│   │   ├── invoice-analysis.controller.ts
+│   │   └── invoice-analysis.service.ts
+│   ├── routes/                 # Route definitions
+│   ├── services/               # Background services
+│   │   ├── cache.service.ts
+│   │   ├── email.service.ts
+│   │   └── scheduler.service.ts
+│   ├── users/                  # Users module
+│   │   ├── users.controller.ts
+│   │   ├── users.service.ts
+│   │   └── dto/
+│   ├── app.ts                  # Express app setup
+│   └── index.ts                # Entry point
+├── tests/                      # Test files
+├── .dockerignore
+├── .env.example
+├── .gitignore
+├── .prettierrc
+├── docker-compose.yml
+├── Dockerfile
+├── eslint.config.mjs
+├── jest.config.mjs
+├── package.json
+├── README.md
+└── tsconfig.json
 ```
 
 ### Key Modules
@@ -656,19 +656,19 @@ expensetracker-api/
 4. Request review from maintainers
 5. Ensure CI/CD pipeline passes
 
-## \ud83d\udcdd License
+## License
 
 ISC
 
-## \ud83d\udc68\u200d\ud83d\udcbb Author
+## Author
 
 **Igor Golubenkov**
 
-## \ud83d\udd17 Related Projects
+## Related Projects
 
 - [ExpenseTracker Frontend](https://github.com/yourusername/expense-tracker-frontend) - React frontend application
 
-## \ud83d\udcde Support
+## Support
 
 For issues, questions, or contributions:
 
@@ -676,7 +676,7 @@ For issues, questions, or contributions:
 - Check existing issues and documentation
 - Review DEPLOYMENT_GUIDE.md and MONITORING.md for ops-related questions
 
-## \u2b50 Acknowledgments
+## Acknowledgments
 
 - Built as a test project for JS division
 - Implements modern Node.js/Express.js best practices
@@ -685,519 +685,4 @@ For issues, questions, or contributions:
 
 ---
 
-**Happy Expense Tracking! \ud83d\udcb0**"
-
-- Validate the file format and size (jpg, ≤5MB)
-- Do not save the file anywhere
-- Analyze the image and return an object with fields: name, amount, currency (USD/EUR), date
-- Return an error if the file could not be parsed
-- Add unit tests for the endpoint and logic
-- Do not skip any Acceptance Criteria from the README
-- After completion, provide a short report on what was done and what needs to be done manually
-
-</details>
-
----
-
-</details>
-
-<details>
-<summary>Task 2: Saving the order in which records are displayed</summary>
-
----
-
-**Description:**
-
-Drag & drag functionality will be added to the frontend. It is necessary to provide support for this functionality on the backend.
-
-**Acceptance Criteria:**
-
-- A new field has been added to the `Expenses` model to save the display order of a record.
-- Added a new endpoint for updating the order of records.
-- Updated endpoint for receiving records. Now the data should be sorted by the order field.
-
----
-
-<details>
-<summary>AI Prompt (NodeJS)</summary>
-
-Perform Backend Task 2 from the README file `ExpenseTracker/README.md`:
-
-- Work in the `ExpenseTracker` folder
-- Add a new field to the `Expenses` model to store the display order
-- Create a new endpoint for updating the order of records
-- Update the endpoint for retrieving records to sort by the order field
-- Do not skip any Acceptance Criteria from the README
-- After completion, provide a short report on what was done and what needs to be done manually
-
-</details>
-
----
-
-</details>
-
-<details>
-<summary>Task 3: Add logger</summary>
-
----
-
-**Description:**
-
-To improve debugging, monitoring, and error tracking, we need to integrate a logging system into the project. The logger should provide different log levels (e.g., info, warn, error, debug) and support structured logging.
-
-**Acceptance Criteria:**
-
-- A logging system has been implemented with support for multiple log levels (e.g., info, warn, error, debug).
-- Logs have been structured to include timestamps and relevant contextual information.
-- Logging has been added to key application areas, such as API requests, database operations, and error handling.
-- A mechanism has been introduced to store logs efficiently, supporting both local and external log management solutions.
-- Configuration options have been provided to enable or disable logging in different environments (development, production).
-- Unit tests added.
-- ***
-
-<details>
-<summary>AI Prompt (NodeJS)</summary>
-
-Perform Backend Task 3 from the README file `ExpenseTracker/README.md`:
-
-- Work in the `ExpenseTracker` folder
-- Integrate a logging system with multiple log levels (info, warn, error, debug)
-- Structure logs with timestamps and contextual information
-- Add logging to key areas: API requests, DB operations, error handling
-- Support both local and external log management solutions
-- Provide configuration for enabling/disabling logging in different environments
-- Add unit tests for logging logic
-- Do not skip any Acceptance Criteria from the README
-- After completion, provide a short report on what was done and what needs to be done manually
-
-</details>
-
----
-
-</details>
-
-<details>
-<summary>Task 4: Analyze and Optimize RPS Performance</summary>
-
----
-
-**Description:**
-
-To ensure optimal system performance and scalability, an analysis of the existing endpoints has been conducted. The goal was to identify bottlenecks, explore optimization opportunities, and implement improvements. After implementing the solutions, RPS was analyzed again to measure performance gains.
-
-**Acceptance Criteria:**
-
-- Existing endpoints have been analyzed to identify performance bottlenecks.
-- Potential optimization techniques (e.g., caching, indexing, query optimization, load balancing, multi threads) have been evaluated and implemented where applicable.
-- After optimizations, RPS has been measured again to assess performance improvements.
-- A summary report with findings, implemented solutions, and performance comparisons has been created.
-
----
-
-<details>
-<summary>AI Prompt (NodeJS)</summary>
-
-Perform Backend Task 4 from the README file `ExpenseTracker/README.md`:
-
-- Work in the `ExpenseTracker` folder
-- Analyze existing endpoints to identify performance bottlenecks
-- Evaluate and implement optimization techniques (caching, indexing, query optimization, load balancing, multi-threading) where applicable
-- Measure RPS before and after optimizations
-- Create a summary report with findings, solutions, and performance comparisons
-- Do not skip any Acceptance Criteria from the README
-- After completion, provide a short report on what was done and what needs to be done manually
-
-</details>
-
----
-
-</details>
-
-<details>
-<summary>Task 5: Containerize Backend with Docker</summary>
-
----
-
-**Description:**
-
-To improve deployment efficiency and maintainability, the backend has been containerized using Docker. The application can now be consistently deployed across different environments with minimal configuration overhead.
-
-**Acceptance Criteria:**
-
-- A Dockerfile has been created and optimized for production use.
-- A .dockerignore file has been added to exclude unnecessary files from the image.
-- The application runs successfully inside a Docker container.
-- Environment variables are managed securely and injected into the container.
-- The container has been tested locally to ensure it functions correctly.
-
----
-
-<details>
-<summary>AI Prompt (NodeJS)</summary>
-
-Perform Backend Task 5 from the README file `ExpenseTracker/README.md`:
-
-- Work in the `ExpenseTracker` folder
-- Create and optimize a Dockerfile for production use
-- Add a .dockerignore file to exclude unnecessary files
-- Ensure the application runs successfully inside a Docker container
-- Manage environment variables securely and inject them into the container
-- Test the container locally
-- Do not skip any Acceptance Criteria from the README
-- After completion, provide a short report on what was done and what needs to be done manually
-
-</details>
-
----
-
-</details>
-
-<details>
-<summary>Task 6: Add GitHub Action for CI/CD</summary>
-
----
-
-**Description:**
-
-To automate the development workflow, a GitHub Action has been added. This workflow ensures that all necessary checks are performed before merging code changes.
-
-**Acceptance Criteria:**
-
-- A GitHub Action workflow file (`.github/workflows/ci.yml`) has been created.
-- The workflow includes the following steps:
-  - Run unit and integration tests.
-  - Perform type checking.
-  - Check code formatting (e.g., Prettier, ESLint).
-  - Build the application to ensure there are no compilation errors.
-  - Build a Docker container to validate the deployment process.
-- The workflow runs automatically on every pull request and push to main.
-- Status checks have been integrated into GitHub to prevent merging if tests fail.
-
----
-
-<details>
-<summary>AI Prompt (NodeJS)</summary>
-
-Perform Backend Task 6 from the README file `ExpenseTracker/README.md`:
-
-- Work in the `ExpenseTracker` folder
-- Create a GitHub Action workflow file (`.github/workflows/ci.yml`)
-- Add steps for running unit/integration tests, type checking, code formatting, building the app, and building a Docker container
-- Ensure the workflow runs on every pull request and push to main
-- Integrate status checks to prevent merging if tests fail
-- Do not skip any Acceptance Criteria from the README
-- After completion, provide a short report on what was done and what needs to be done manually
-
-</details>
-
----
-
-</details>
-
-<details>
-<summary>Task 7: Deploy Application</summary>
-
----
-
-**Description:**
-
-To make the application available for production use, a deployment pipeline has been set up. The deployment process ensures smooth updates with minimal downtime.
-
-**Acceptance Criteria:**
-
-- The backend application has been deployed to the target environment.
-- The deployment process is automated through a CI/CD pipeline.
-- Environment variables are securely injected during deployment.
-- Monitoring and logging tools have been configured to track application performance.
-
----
-
-<details>
-<summary>AI Prompt (NodeJS)</summary>
-
-Perform Backend Task 7 from the README file `ExpenseTracker/README.md`:
-
-- Work in the `ExpenseTracker` folder
-- Deploy the backend application to the target environment
-- Automate the deployment process through a CI/CD pipeline
-- Securely inject environment variables during deployment
-- Configure monitoring and logging tools to track application performance
-- Do not skip any Acceptance Criteria from the README
-- After completion, provide a short report on what was done and what needs to be done manually
-
-</details>
-
----
-
-</details>
-
-## Frontend
-
-<details>
-<summary>Task 1: Upload Invoice and Pre-fill Expense Form</summary>
-
----
-
-**Description:**
-
-To streamline the expense creation process, a feature for uploading invoices has been implemented. Users can upload a JPG image (up to 5MB) via a modal, and the backend extracts relevant data to pre-fill the expense form.
-
-**Acceptance Criteria:**
-
-- A "Upload Invoice" button has been added to the sidebar.
-- Clicking the button opens a modal window.
-- The modal supports drag & drop and file selection.
-- Only JPG files up to 5MB are accepted.
-- The image is sent to the backend, which returns extracted invoice data.
-- The expense form is pre-filled with the received data.
-- Proper validation and error handling have been implemented.
-- Storybook added.
-- Unit tests added.
-
----
-
-<details>
-<summary>AI Prompt (React)</summary>
-
-Perform Frontend Task 1 from the README file `ExpenseTracker/README.md`:
-
-- Work in the `ExpenseTracker` folder
-- Add a "Upload Invoice" button to the sidebar
-- Implement a modal window with drag & drop and file selection for JPG files up to 5MB
-- Send the image to the backend and pre-fill the expense form with the received data
-- Add validation and error handling for file type, size, and backend errors
-- Add Storybook stories for the modal and upload components
-- Add unit tests for the upload and pre-fill logic
-- After completion, provide a short report on what was done and what needs to be done manually
-
-</details>
-
----
-
-</details>
-
-<details>
-<summary>Task 2: Implement Drag & Drop Functionality</summary>
-
----
-
-**Description:**
-
-Drag & Drop functionality has been added to enhance usability. Users can now interact with expense table records.
-
-**Acceptance Criteria:**
-
-- Drag & Drop functionality has been integrated.
-- The system correctly processes dropped elements.
-- The previously created API endpoint is used to persist changes.
-
----
-
-<details>
-<summary>AI Prompt (React)</summary>
-
-Perform Frontend Task 2 from the README file `ExpenseTracker/README.md`:
-
-- Work in the `ExpenseTracker` folder
-- Integrate drag & drop functionality for expense table records
-- Use the backend API endpoint to persist the new order of records
-- Ensure correct processing of dropped elements and update the UI accordingly
-- Add unit tests for drag & drop logic
-- Add Storybook stories for drag & drop components
-- After completion, provide a short report on what was done and what needs to be done manually
-
-</details>
-
----
-
-</details>
-
-<details>
-<summary>Task 3: DevTools and Render Optimization</summary>
-
----
-
-**Description:**
-
-To improve application performance, DevTools have been used to analyze and optimize unnecessary re-renders.
-
-**Acceptance Criteria:**
-
-- DevTools for performance analysis (React DevTools, Redux DevTools, why-did-you-render) have been installed.
-- Components with excessive re-renders have been identified.
-- Unnecessary renders have been optimized using memoization, useCallback, and useMemo where applicable.
-- Performance improvements have been verified with updated benchmarks.
-
----
-
-<details>
-<summary>AI Prompt (React)</summary>
-
-Perform Frontend Task 3 from the README file `ExpenseTracker/README.md`:
-
-- Work in the `ExpenseTracker` folder
-- Install and use DevTools (React DevTools, Redux DevTools, why-did-you-render) to analyze re-renders
-- Identify components with excessive re-renders and optimize them using memoization, useCallback, and useMemo
-- Verify performance improvements with updated benchmarks
-- After completion, provide a short report on what was done and what needs to be done manually
-
-</details>
-
----
-
-</details>
-
-<details>
-<summary>Task 4: Integrate Logging Tools (Sentry)</summary>
-
----
-
-**Description:**
-
-To improve error tracking and debugging, logging tools have been integrated into the frontend.
-
-**Acceptance Criteria:**
-
-- Sentry has been integrated for logging errors and performance issues.
-- Source maps have been configured for better debugging.
-- Global error boundaries have been added to prevent UI crashes.
-- Logs include user actions and relevant context for debugging.
-
----
-
-<details>
-<summary>AI Prompt (React)</summary>
-
-Perform Frontend Task 4 from the README file `ExpenseTracker/README.md`:
-
-- Work in the `ExpenseTracker` folder
-- Integrate Sentry for error and performance logging
-- Configure source maps for better debugging
-- Add global error boundaries to prevent UI crashes
-- Ensure logs include user actions and relevant context
-- After completion, provide a short report on what was done and what needs to be done manually
-
-</details>
-
----
-
-</details>
-
-<details>
-<summary>Task 5: Add Docker Container for Frontend</summary>
-
----
-
-**Description:**
-
-To ensure consistency across environments, the frontend has been containerized using Docker.
-
-**Acceptance Criteria:**
-
-- A Dockerfile has been created for the frontend.
-- A .dockerignore file has been added.
-- The application runs successfully inside a Docker container.
-
----
-
-<details>
-<summary>AI Prompt (React)</summary>
-
-Perform Frontend Task 5 from the README file `ExpenseTracker/README.md`:
-
-- Work in the `ExpenseTracker` folder
-- Create a Dockerfile and .dockerignore for the frontend
-- Ensure the application runs successfully inside a Docker container
-- After completion, provide a short report on what was done and what needs to be done manually
-
-</details>
-
----
-
-</details>
-
-<details>
-<summary>Task 6: CI/CD for Frontend</summary>
-
----
-
-**Description:**
-
-A CI/CD pipeline has been added to automate testing, linting, and building of the frontend application.
-
-**Acceptance Criteria:**
-
-- A GitHub Action workflow has been created.
-- The workflow includes:
-  - Linting and formatting checks.
-  - Unit and integration tests execution.
-  - Building the frontend application.
-  - Building a Docker image for deployment.
-- The pipeline runs on pull requests and pushes to main.
-
----
-
-<details>
-<summary>AI Prompt (React)</summary>
-
-Perform Frontend Task 6 from the README file `ExpenseTracker/README.md`:
-
-- Work in the `ExpenseTracker` folder
-- Create a GitHub Action workflow for the frontend (`.github/workflows/ci.yml`)
-- Add steps for linting, formatting, unit/integration tests, building the app, and building a Docker image
-- Ensure the pipeline runs on pull requests and pushes to main
-- After completion, provide a short report on what was done and what needs to be done manually
-
-</details>
-
----
-
-</details>
-
-<details>
-<summary>Task 7: Deploy Frontend to Server</summary>
-
----
-
-**Description:**
-
-To make the frontend application accessible, an automated deployment pipeline has been set up.
-
-**Acceptance Criteria:**
-
-- The application has been deployed to the target environment.
-- The deployment process is automated and triggered by the CI/CD pipeline.
-- Environment variables are securely managed.
-
----
-
-<details>
-<summary>AI Prompt (React)</summary>
-
-Perform Frontend Task 7 from the README file `ExpenseTracker/README.md`:
-
-- Work in the `ExpenseTracker` folder
-- Deploy the frontend application to the target environment
-- Automate the deployment process via the CI/CD pipeline
-- Ensure environment variables are securely managed
-- After completion, provide a short report on what was done and what needs to be done manually
-
-</details>
-
----
-
-</details>
-
-## Solution
-
-In progress...
-
-<!-- If you've already finished working on this part or are stuck, these repositories might be useful to you.
-  - [API](https://github.com/petproject-dev/expense-tracker-backend-part-4) - Express.js
-  - [UI](https://github.com/petproject-dev/expense-tracker-frontend-part-4) - React -->
-
-## Found an Issue?
-
-We strive to make the project as clear and helpful as possible. If you notice any errors, inconsistencies, or unclear instructions, please open a Pull Request in this repository with your suggested fixes or improvements. Your feedback helps improve the learning experience for everyone!
-
-Happy coding, and good luck with this part of the project!
+**Happy Expense Tracking!**
