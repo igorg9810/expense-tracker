@@ -43,4 +43,7 @@ coverage/
 .cache/
 
 # TypeScript
-*.tsbuildinfo 
+*.tsbuildinfo
+
+# Task implementation reports (keep locally)
+TASK*_REPORT.md 
