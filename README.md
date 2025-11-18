@@ -157,7 +157,7 @@ npm run test:watch
 npm run test:coverage
 ```
 
-## \ud83d\udd11 Environment Variables
+## Environment Variables
 
 Create a `.env` file in the root directory:
 
@@ -201,7 +201,7 @@ MAX_PAGE_SIZE=100
 4. Generate and copy the 16-character password
 5. Use this password in `GMAIL_APP_PASSWORD`
 
-## \ud83d\udcda API Documentation
+## API Documentation
 
 ### Base URL
 
@@ -345,7 +345,7 @@ curl -X POST http://localhost:3000/invoices/analyze \
 
 Open `test-api.html` or `test-api-auth.html` in a browser for interactive API testing with a user-friendly interface.
 
-## \ud83d\udee0 Development
+## Development
 
 ### Available Scripts
 
@@ -403,7 +403,7 @@ npx prisma studio
 
 Opens Prisma Studio at `http://localhost:5555` for visual database management.
 
-## \ud83e\uddea Testing
+## Testing
 
 ### Running Tests
 
@@ -427,15 +427,15 @@ Tests are located in the `tests/` directory:
 
 ```
 tests/
-\u251c\u2500\u2500 auth/
-\u2502   \u251c\u2500\u2500 auth.controller.test.ts
-\u2502   \u251c\u2500\u2500 auth.middleware.test.ts
-\u2502   \u2514\u2500\u2500 password-reset.controller.test.ts
-\u251c\u2500\u2500 users/
-\u2502   \u2514\u2500\u2500 users.controller.test.ts
-\u251c\u2500\u2500 expenses.controller.test.ts
-\u251c\u2500\u2500 mocks.ts
-\u2514\u2500\u2500 setup.ts
+|-- auth/
+|   |-- auth.controller.test.ts
+|   |-- auth.middleware.test.ts
+|   +-- password-reset.controller.test.ts
+|-- users/
+|   +-- users.controller.test.ts
+|-- expenses.controller.test.ts
+|-- mocks.ts
++-- setup.ts
 ```
 
 ### Test Coverage
@@ -449,7 +449,7 @@ Current coverage:
 
 Coverage reports are generated in `coverage/` directory.
 
-## \ud83d\udc33 Docker
+## Docker
 
 ### Build and Run with Docker
 
@@ -518,7 +518,7 @@ The project includes:
 - Volume mounts for data persistence
 - Automatic restart on failure
 
-## \ud83d\ude80 Deployment
+## Deployment
 
 ### GitHub Actions CI/CD
 
@@ -572,55 +572,55 @@ NODE_ENV=production npm start
 
 ```
 expensetracker-api/
-├── .github/
-│   └── workflows/
-│       └── ci.yml              # CI/CD pipeline
-├── prisma/
-│   ├── migrations/             # Database migrations
-│   └── schema.prisma           # Database schema
-├── src/
-│   ├── auth/                   # Authentication module
-│   │   ├── auth.controller.ts
-│   │   ├── auth.middleware.ts
-│   │   ├── auth.service.ts
-│   │   └── dto/
-│   ├── config/                 # Configuration
-│   │   └── index.ts
-│   ├── db/                     # Database client
-│   │   └── index.ts
-│   ├── expenses/               # Expenses module
-│   │   ├── expenses.controller.ts
-│   │   ├── expenses.service.ts
-│   │   └── dto/
-│   ├── helpers/                # Utilities
-│   │   ├── Logger.ts
-│   │   └── middlewares/
-│   ├── invoices/               # Invoice OCR module
-│   │   ├── invoice-analysis.controller.ts
-│   │   └── invoice-analysis.service.ts
-│   ├── routes/                 # Route definitions
-│   ├── services/               # Background services
-│   │   ├── cache.service.ts
-│   │   ├── email.service.ts
-│   │   └── scheduler.service.ts
-│   ├── users/                  # Users module
-│   │   ├── users.controller.ts
-│   │   ├── users.service.ts
-│   │   └── dto/
-│   ├── app.ts                  # Express app setup
-│   └── index.ts                # Entry point
-├── tests/                      # Test files
-├── .dockerignore
-├── .env.example
-├── .gitignore
-├── .prettierrc
-├── docker-compose.yml
-├── Dockerfile
-├── eslint.config.mjs
-├── jest.config.mjs
-├── package.json
-├── README.md
-└── tsconfig.json
+|-- .github/
+|   +-- workflows/
+|       +-- ci.yml              # CI/CD pipeline
+|-- prisma/
+|   |-- migrations/             # Database migrations
+|   +-- schema.prisma           # Database schema
+|-- src/
+|   |-- auth/                   # Authentication module
+|   |   |-- auth.controller.ts
+|   |   |-- auth.middleware.ts
+|   |   |-- auth.service.ts
+|   |   +-- dto/
+|   |-- config/                 # Configuration
+|   |   +-- index.ts
+|   |-- db/                     # Database client
+|   |   +-- index.ts
+|   |-- expenses/               # Expenses module
+|   |   |-- expenses.controller.ts
+|   |   |-- expenses.service.ts
+|   |   +-- dto/
+|   |-- helpers/                # Utilities
+|   |   |-- Logger.ts
+|   |   +-- middlewares/
+|   |-- invoices/               # Invoice OCR module
+|   |   |-- invoice-analysis.controller.ts
+|   |   +-- invoice-analysis.service.ts
+|   |-- routes/                 # Route definitions
+|   |-- services/               # Background services
+|   |   |-- cache.service.ts
+|   |   |-- email.service.ts
+|   |   +-- scheduler.service.ts
+|   |-- users/                  # Users module
+|   |   |-- users.controller.ts
+|   |   |-- users.service.ts
+|   |   +-- dto/
+|   |-- app.ts                  # Express app setup
+|   +-- index.ts                # Entry point
+|-- tests/                      # Test files
+|-- .dockerignore
+|-- .env.example
+|-- .gitignore
+|-- .prettierrc
+|-- docker-compose.yml
+|-- Dockerfile
+|-- eslint.config.mjs
+|-- jest.config.mjs
+|-- package.json
+|-- README.md
++-- tsconfig.json
 ```
 
 ### Key Modules
@@ -632,7 +632,7 @@ expensetracker-api/
 - **helpers/** - Logger, middlewares, utilities
 - **services/** - Background jobs, email, caching
 
-## \ud83e\udd1d Contributing
+## Contributing
 
 1. Fork the repository
 2. Create a feature branch: `git checkout -b feature/amazing-feature`
@@ -666,7 +666,7 @@ ISC
 
 ## Related Projects
 
-- [ExpenseTracker Frontend](https://github.com/yourusername/expense-tracker-frontend) - React frontend application
+- [ExpenseTracker Frontend](https://github.com/igorg9810/expense-tracker-frontend) - React frontend application
 
 ## Support
 
