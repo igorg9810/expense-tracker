@@ -278,3 +278,224 @@ jobs:
           echo "- Build: ✅"
           echo "- Docker build: ✅"
           echo "- Security audit: ✅"
+
+  # Job 8: Push Docker Image to Registry
+  docker-push:
+    name: Push Docker Image
+    runs-on: ubuntu-latest
+    needs: [ci-success]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+    permissions:
+      contents: read
+      packages: write
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata for Docker
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/${{ github.repository_owner }}/expensetracker-api
+          tags: |
+            type=sha,prefix={{branch}}-
+            type=raw,value=latest,enable={{is_default_branch}}
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          platforms: linux/amd64
+
+      - name: Generate deployment summary
+        run: |
+          echo "### 🚀 Docker Image Published" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Image:** ghcr.io/${{ github.repository_owner }}/expensetracker-api" >> $GITHUB_STEP_SUMMARY
+          echo "**Tags:** ${{ steps.meta.outputs.tags }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Commit:** ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Branch:** ${{ github.ref_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "To pull this image:" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`bash" >> $GITHUB_STEP_SUMMARY
+          echo "docker pull ghcr.io/${{ github.repository_owner }}/expensetracker-api:latest" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+
+  # Job 9: Deploy to Production
+  deploy:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+    needs: [docker-push]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+    environment:
+      name: production
+      url: ${{ secrets.DEPLOYMENT_URL }}
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # Deployment Option 1: Deploy to custom server via SSH with Docker
+      - name: Deploy to Server via SSH
+        if: ${{ secrets.DEPLOY_HOST != '' && secrets.DEPLOY_USER != '' }}
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          key: ${{ secrets.DEPLOY_SSH_KEY }}
+          port: ${{ secrets.DEPLOY_PORT || 22 }}
+          script: |
+            echo "🚀 Starting deployment..."
+            
+            # Navigate to deployment directory
+            cd ${{ secrets.DEPLOY_PATH || '/opt/expensetracker' }}
+            
+            # Log in to GitHub Container Registry
+            echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+            
+            # Pull latest image
+            echo "📦 Pulling latest Docker image..."
+            docker pull ghcr.io/${{ github.repository_owner }}/expensetracker-api:latest
+            
+            # Stop and remove old container
+            echo "🛑 Stopping old container..."
+            docker stop expensetracker-api || true
+            docker rm expensetracker-api || true
+            
+            # Run database migrations
+            echo "🔄 Running database migrations..."
+            docker run --rm \
+              -v $(pwd)/data:/app/data \
+              -e NODE_ENV=production \
+              -e DB_PATH=${{ secrets.DB_PATH || 'file:./data/expense-tracker.db' }} \
+              ghcr.io/${{ github.repository_owner }}/expensetracker-api:latest \
+              npx prisma migrate deploy
+            
+            # Start new container
+            echo "▶️ Starting new container..."
+            docker run -d \
+              --name expensetracker-api \
+              --restart unless-stopped \
+              -p ${{ secrets.DEPLOY_CONTAINER_PORT || 3000 }}:3000 \
+              -v $(pwd)/data:/app/data \
+              -v $(pwd)/logs:/app/logs \
+              -e NODE_ENV=production \
+              -e PORT=3000 \
+              -e DB_PATH=${{ secrets.DB_PATH || 'file:./data/expense-tracker.db' }} \
+              -e LOG_ENABLED=${{ secrets.LOG_ENABLED || 'true' }} \
+              -e LOG_LEVEL=${{ secrets.LOG_LEVEL || 'info' }} \
+              -e CORS_ORIGIN=${{ secrets.CORS_ORIGIN || '*' }} \
+              -e RATE_LIMIT_WINDOW_MS=${{ secrets.RATE_LIMIT_WINDOW_MS || '900000' }} \
+              -e RATE_LIMIT_MAX_REQUESTS=${{ secrets.RATE_LIMIT_MAX_REQUESTS || '100' }} \
+              -e JWT_SECRET=${{ secrets.JWT_SECRET }} \
+              -e JWT_REFRESH_SECRET=${{ secrets.JWT_REFRESH_SECRET }} \
+              -e JWT_EXPIRES_IN=${{ secrets.JWT_EXPIRES_IN || '15m' }} \
+              -e JWT_REFRESH_EXPIRES_IN=${{ secrets.JWT_REFRESH_EXPIRES_IN || '7d' }} \
+              -e GMAIL_USER=${{ secrets.GMAIL_USER }} \
+              -e GMAIL_APP_PASSWORD=${{ secrets.GMAIL_APP_PASSWORD }} \
+              ghcr.io/${{ github.repository_owner }}/expensetracker-api:latest
+            
+            # Wait for container to be healthy
+            echo "⏳ Waiting for application to start..."
+            sleep 10
+            
+            # Check container status
+            echo "🔍 Checking container status..."
+            docker ps -a | grep expensetracker-api
+            
+            # Verify health endpoint
+            echo "🏥 Checking application health..."
+            for i in {1..12}; do
+              if curl -f http://localhost:${{ secrets.DEPLOY_CONTAINER_PORT || 3000 }}/health; then
+                echo "✅ Deployment successful!"
+                break
+              fi
+              if [ $i -eq 12 ]; then
+                echo "❌ Health check failed after 12 attempts"
+                docker logs expensetracker-api
+                exit 1
+              fi
+              echo "⏳ Attempt $i/12 failed, retrying in 5s..."
+              sleep 5
+            done
+            
+            # Clean up old images
+            echo "🧹 Cleaning up old Docker images..."
+            docker image prune -f
+            
+            echo "✅ Deployment complete!"
+
+      # Deployment Option 2: Deploy using Docker Compose (if enabled)
+      - name: Deploy with Docker Compose
+        if: ${{ secrets.USE_DOCKER_COMPOSE == 'true' }}
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          key: ${{ secrets.DEPLOY_SSH_KEY }}
+          port: ${{ secrets.DEPLOY_PORT || 22 }}
+          script: |
+            echo "🚀 Starting Docker Compose deployment..."
+            
+            cd ${{ secrets.DEPLOY_PATH || '/opt/expensetracker' }}
+            
+            # Log in to GitHub Container Registry
+            echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+            
+            # Pull latest images
+            docker-compose pull
+            
+            # Restart services with zero-downtime
+            docker-compose up -d --no-deps --build api
+            
+            echo "✅ Docker Compose deployment complete!"
+
+      # Post-deployment verification
+      - name: Verify deployment
+        run: |
+          echo "### ✅ Deployment Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Environment:** Production" >> $GITHUB_STEP_SUMMARY
+          echo "**Deployed at:** $(date -u '+%Y-%m-%d %H:%M:%S UTC')" >> $GITHUB_STEP_SUMMARY
+          echo "**Commit:** ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Branch:** ${{ github.ref_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Deployment Details:**" >> $GITHUB_STEP_SUMMARY
+          echo "- Image: ghcr.io/${{ github.repository_owner }}/expensetracker-api:latest" >> $GITHUB_STEP_SUMMARY
+          echo "- Container: expensetracker-api" >> $GITHUB_STEP_SUMMARY
+          echo "- Port: ${{ secrets.DEPLOY_CONTAINER_PORT || 3000 }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Post-Deployment Checklist:**" >> $GITHUB_STEP_SUMMARY
+          echo "- [ ] Verify application is accessible" >> $GITHUB_STEP_SUMMARY
+          echo "- [ ] Check logs for errors: \`docker logs expensetracker-api\`" >> $GITHUB_STEP_SUMMARY
+          echo "- [ ] Monitor application metrics" >> $GITHUB_STEP_SUMMARY
+          echo "- [ ] Test critical API endpoints" >> $GITHUB_STEP_SUMMARY
+          echo "- [ ] Verify database migrations applied" >> $GITHUB_STEP_SUMMARY
+
+      - name: Deployment status notification
+        if: always()
+        run: |
+          if [ "${{ job.status }}" == "success" ]; then
+            echo "✅ Deployment to production completed successfully!"
+          else
+            echo "❌ Deployment to production failed!"
+            exit 1
+          fi
