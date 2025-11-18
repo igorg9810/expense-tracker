@@ -82,7 +82,13 @@ app.use(
         : ['http://localhost:3000', 'http://127.0.0.1:3000', 'http://localhost:5173', 'null'], // Allow local development and file:// origin
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+    allowedHeaders: [
+      'Content-Type',
+      'Authorization',
+      'X-Requested-With',
+      'baggage',
+      'sentry-trace',
+    ],
     exposedHeaders: ['X-Total-Count'],
     maxAge: 86400, // 24 hours
   })
