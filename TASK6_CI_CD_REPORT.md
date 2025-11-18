@@ -21,8 +21,8 @@ Successfully implemented a comprehensive GitHub Actions CI/CD pipeline that auto
 
 The workflow is triggered on:
 
-- Push to `main` branch
-- Pull requests targeting `main` branch
+- Push to `master` branch
+- Pull requests targeting `master` branch
 
 ### 2. Pipeline Jobs Implemented
 
@@ -133,7 +133,7 @@ The workflow is triggered on:
 ✅ **Code formatting:** ESLint and Prettier checks in `code-quality` job  
 ✅ **Build application:** Complete build process in `build` job  
 ✅ **Build Docker container:** Full Docker build and test in `docker-build` job  
-✅ **Runs on PR and push to main:** Configured in workflow triggers  
+✅ **Runs on PR and push to master:** Configured in workflow triggers  
 ✅ **Status checks prevent merging:** All jobs must pass for merge approval
 
 ---
@@ -183,7 +183,7 @@ The workflow is triggered on:
 #### Required Branch Protection Rules (Settings → Branches):
 
 1. Navigate to repository **Settings** → **Branches**
-2. Add branch protection rule for `main`:
+2. Add branch protection rule for `master`:
    - ☑ Require a pull request before merging
    - ☑ Require status checks to pass before merging
    - ☑ Require branches to be up to date before merging
@@ -199,7 +199,7 @@ The workflow is triggered on:
    - ☑ Do not allow bypassing the above settings
    - ☑ Require approval from code owners (if you have CODEOWNERS file)
 
-**Note:** Status checks only appear in the dropdown after the workflow has run at least once. Push the workflow file to `main` first, then configure branch protection.
+**Note:** Status checks only appear in the dropdown after the workflow has run at least once. Push the workflow file to `master` first, then configure branch protection.
 
 ### 2. GitHub Secrets Configuration
 
@@ -226,7 +226,7 @@ To activate the workflow:
 # Commit and push the workflow file
 git add .github/workflows/ci.yml
 git commit -m "Add CI/CD pipeline with GitHub Actions"
-git push origin main
+git push origin master
 ```
 
 The workflow will run automatically and appear in the **Actions** tab.
